@@ -1,0 +1,14 @@
+#pragma once
+
+//âëúìx
+#define RESOLUTIONX 1024		//â°ïù
+#define RESOLUTIONY 768			//ècïù
+
+#define MAPCHIP_SIZE_HEIGHT (40)
+#define MAPCHIP_SIZE_WIDTH (40)
+
+#define MAP_SIZE_HEIGHT RESOLUTIONY/MAPCHIP_SIZE_HEIGHT * 2
+#define MAP_SIZE_WIDTH RESOLUTIONX/MAPCHIP_SIZE_WIDTH * 2l
+
+
+extern int MapChipDate[MAP_SIZE_HEIGHT][MAP_SIZE_WIDTH];
