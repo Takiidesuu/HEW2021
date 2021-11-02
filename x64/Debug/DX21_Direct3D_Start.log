@@ -1,0 +1,15 @@
+﻿  Sprite.cpp
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\sprite.cpp(64): warning C4244: '初期化中': 'double' から 'float' への変換です。データが失われる可能性があります。
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\sprite.cpp(65): warning C4244: '初期化中': 'double' から 'float' への変換です。データが失われる可能性があります。
+  game.cpp
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\game.cpp(80): warning C4305: '-=': 'double' から 'float' へ切り詰めます。
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\game.cpp(83): warning C4305: '+=': 'double' から 'float' へ切り詰めます。
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\game.cpp(92): warning C4305: '+=': 'double' から 'float' へ切り詰めます。
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\game.cpp(95): warning C4305: '-=': 'double' から 'float' へ切り詰めます。
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\game.cpp(102): warning C4305: '-=': 'double' から 'float' へ切り詰めます。
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\game.cpp(105): warning C4305: '+=': 'double' から 'float' へ切り詰めます。
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\game.cpp(112): warning C4305: '+=': 'double' から 'float' へ切り詰めます。
+d:\hal\2年\hew\dx_sprite_test\dx21_direct3d_texture_upload\game.cpp(115): warning C4305: '-=': 'double' から 'float' へ切り詰めます。
+  main.cpp
+  コードを生成中...
+  DX21_Direct3D_Start.vcxproj -> D:\HAL\2年\HEW\DX_Sprite_test\DX21_Direct3D_Texture_upload\x64\Debug\DX21_Direct3D_Texture.exe

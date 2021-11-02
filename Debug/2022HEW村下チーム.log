@@ -1,0 +1,5 @@
+﻿cl : コマンド ライン warning D9025: '/sdl' より '/GS-' が優先されます。
+  Game.cpp
+d:\hal\2年\hew\2022hew村下チーム\gameobject.h(5): warning C4005: 'GRAVITY': マクロが再定義されました。
+  d:\hal\2年\hew\2022hew村下チーム\sprite.h(15): note: 'GRAVITY' の以前の定義を確認してください
+  2022HEW村下チーム.vcxproj -> D:\HAL\2年\HEW\2022HEW村下チーム\Debug\2022HEW村下チーム.exe
