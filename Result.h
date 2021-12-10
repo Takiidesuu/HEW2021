@@ -1,12 +1,17 @@
 #include "Scene.h"
 
-#define RESULT_SPRITE_NUM 5
+#define RESULT_SPRITE_NUM 7
 
 enum ACT_SELECT {
 	NONE,
 	STAGE_SELECT,
 	RETRY,
 	NEXT
+};
+
+enum ResultSceane {
+	TIME,
+	ACHIEVE
 };
 
 class CResult :public Scene
@@ -17,11 +22,13 @@ public:
 	void Draw();
 
 private:
-	Input* inputObj;		//インプットオブジェクト
+	Input* mInputObj;		//インプットオブジェクト
 
-	CSprite **sprite;
+	CSprite **mSprite;
 
-	bool inputflg;
+	ResultSceane mResultScene = TIME;
 
-	int select = 0;
+	bool mInputflg;
+
+	int mSelect = 0;
 };
