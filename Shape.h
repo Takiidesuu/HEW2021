@@ -16,6 +16,9 @@ class CircleShape : public Shape
 public:
 	CircleShape(float centerX, float centerY, float radius);  // 初期化用コンストラクタ
 
+	void SetPos(float posX, float posY);
+	void SetSize(float radius);
+
 	float GetCenterX() const;  // 中心のX座標を取得
 	float GetCenterY() const;  // 中心のY座標を取得
 	float GetRadius() const;   // 半径を取得

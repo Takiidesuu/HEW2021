@@ -1,7 +1,8 @@
 ﻿#pragma once
 
 #include <math.h>
-#include "direct3d.h"
+#include <d3d11.h>	// マイクロソフト提供のDirectX11ヘッダーファイルをインクルード
+
 
 // ****************************************
 // プリプロセッサ定数・マクロ定義
@@ -12,40 +13,30 @@
 
 #define MAXSPRITE 64
 
-#define GRAVITY 0.8f
-#define GROUND_Y -0.9f
-#define MOVESPEED 1.0f
+// ****************************************
+// 公開する関数のプロトタイプ宣言
+// ****************************************
 
-#define LEFTBORDER -1.0f
-#define RIGHTBORDER 3.0f
+// Direct3D11 Device*を返す
+ID3D11Device* Direct3D_GetDevice();
 
-#define TELEPORTSIZE 2
+// Direct3D11 Immidiate Context*を返す
+ID3D11DeviceContext* Direct3D_GetContext();
 
-/*
-分割画像ファイル対応の描画クラス。
+// Direct3D11 SwapChain*を返す
+IDXGISwapChain* Direct3D_GetSwapChain();
 
-スプライトサイズの初期値は0x0なので、
-描画するまでにSetSizeを呼び出してサイズを指定する必要がある。
+// Direct3D11 RenderTargetView*を返す
+ID3D11RenderTargetView* Direct3D_GetRenderTargetView();
 
-game.cppの
-Direct3D_GetSwapChain()->Present(0, 0);
-の直前でDrawを呼び出すことで描画できる。
+// DirextX11の初期化を担当する関数（の定義）
+HRESULT Direct3D_Initialize(HWND hWnd);
 
-ゲームオブジェクトに持たせて使用すると良い。
+// Direct3D関連で作成したオブジェクトをすべて開放する
+void Direct3D_Release();
 
-最小使用例: 画面右下にドラゴンの二列目の二番目の画像を表示する
-
-game.cpp
-
-...いろいろ
-
-Sprite sprite("assets/parts/dora01.png", 3, 4);
-sprite.SetSize(1, 1);
-sprite.SetPart(1, 1);
-sprite.Draw();
-
-Direct3D_GetSwapChain()->Present(0, 0);
-*/
+// 指定したファイル名のテクスチャファイル（画像ファイル）を読み込む
+HRESULT Direct3D_LoadTexture(const char* pFileName, ID3D11ShaderResourceView** pOupSRV);
 
 //*****************************************************************************
 // 構造体定義
@@ -59,6 +50,8 @@ struct VERTEX_POSTEX {
 	float u, v;  // テクスチャのUV座標
 };
 
+
+//Spriteクラスの定義
 class CSprite {
 public:
 	// texturePath=画像パス
@@ -73,56 +66,47 @@ public:
 
 	~CSprite();
 
-	void Draw();
+	virtual void Draw();								//描画処理
 
-	void SetPos(float x, float y);
-	void SetPosX(float x);
-	void SetSize(float width, float height);
-	void SetColor(float r, float g, float b, float a);
-	void SetPart(int x, int y);
+	bool reverse_flg = false;							//反転フラグ
+
+	void SetPos(float x, float y);						//マップ上の座標を指定する
+	void SetPosX(float x);								//X座標の指定
+	void SetPosY(float y);								//Y座標の指定
+	void SetSize(float width, float height);			//オブジェクトのサイズを指定する
+	void SetColor(float r, float g, float b, float a);	//オブジェクトの透明度と色の倍率を指定する
+	void SetPart(int x, int y);							//使用するテクスチャの位置を指定する
 	float GetPos(char coord);
-
-	void SinJump();
-
-	void Gravity();       // 重力処理(重力でのジャンプの時はこれ)
-	void SmallGravity();  // 小さい重力(三角関数でのジャンプの時はこれ)
-
-	//この変数の位置を中心に描画する
-	static float mCameraPosX;
-	static float mCameraPosY;
+	virtual void Update();
 
 	bool enabled = false;
 
 protected:
-	int mHorizontalPartNum;
-	int mVerticalPartNum;
+	int mHorizontalPartNum;				//横に何分割するか
+	int mVerticalPartNum;				//横に何分割するか
 
-	float mPosX = 0;
-	float mPosY = 0;
-	float mSizeWidth = 0;
-	float mSizeHeight = 0;
+	float mPosX = 0;					//マップ上でのX座標
+	float mPosY = 0;					//マップ上でのY座標
+	float mSizeWidth = 0;				//横のサイズ
+	float mSizeHeight = 0;				//縦のサイズ
 
-
-	float mR = 1.0f;
-	float mG = 1.0f;
-	float mB = 1.0f;
-	float mA = 1.0f;
+	float mR = 1.0f;					//赤色の強さの倍率
+	float mG = 1.0f;					//緑色の強さの倍率
+	float mB = 1.0f;					//青色の強さの倍率
+	float mA = 1.0f;					//透明度
 
 	float mPixelSizeX = 0.0f;			//描画に使用するテクスチャ画像の横のピクセルサイズをUV座標に変換した際の数値
 	float mPixelSizeY = 0.0f;			//描画に使用するテクスチャ画像の縦のピクセルサイズをUV座標に変換した際の数値
 
-	bool nowJump = false;  // ジャンプ中かどうか
-	float jumpV = 0.01f;    // ジャンプの初速度
-	float jumpY = 0.0008f;    // ジャンプの高さ
-	float jumpTime = 0.0f;    // ジャンプ時間
+	// 分割されたテクスチャのどれを描画するのか
+	int mPartX = 0;
+	int mPartY = 0;
 
-	bool nowAir = true;    // 空中にいるかどうか
-	float airTime = 0.0f;     // 空中にいる時間
+	bool fixedCamera = false;
 
-	// 分割されたテクスチャのどれを描画するのか。
-	int mPartX = 0; // 0～horizontalPartNum - 1
-	int mPartY = 0; // 0～verticalPartNum - 1
+	float fixedCameraPosX;
+	float fixedCameraPosY;
 
-	ID3D11Buffer* mpVertexBuffer = nullptr; // = nullptr;
-	ID3D11ShaderResourceView* mpTexture = nullptr; // = nullptr;
+	ID3D11Buffer* mpVertexBuffer = nullptr;
+	ID3D11ShaderResourceView* mpTexture = nullptr;
 };

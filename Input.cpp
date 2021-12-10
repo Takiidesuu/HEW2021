@@ -1206,11 +1206,11 @@ void Input::Input_Update()
 	gKeys[VK_RETURN] = GetAsyncKeyState(VK_RETURN);		//ENTERキー
 	gKeys[VK_ESCAPE] = GetAsyncKeyState(VK_ESCAPE);		//ESCキー
 	gKeys[VK_SPACE] = GetAsyncKeyState(VK_SPACE);		//スペースキー
+	gKeys[VK_LSHIFT] = GetAsyncKeyState(VK_LSHIFT);		//左SHIFTキー
 	gKeys['W'] = GetAsyncKeyState('W');					//W
 	gKeys['A'] = GetAsyncKeyState('A');					//A
 	gKeys['S'] = GetAsyncKeyState('S');					//S
 	gKeys['D'] = GetAsyncKeyState('D');					//D
-	gKeys['P'] = GetAsyncKeyState('P');					//P
 }
 
 //長押し用の関数
@@ -1231,12 +1231,79 @@ bool Input::GetAxis(DIR direction)
 
 	switch (direction)
 	{
+	case UP:
+		if (Input_GetKeyPress('W') || Input_GetKeyPress(VK_UP) || LeftStick8_1P(UP))
+			result = true;
+		break;
 	case RIGHT:
-		if (Input_GetKeyPress('D') || LeftStick8_1P(RIGHT))
+		if (Input_GetKeyPress('D') || Input_GetKeyPress(VK_RIGHT) || LeftStick8_1P(RIGHT))
+			result = true;
+		break;
+	case DOWN:
+		if (Input_GetKeyPress('S') || Input_GetKeyPress(VK_DOWN) || LeftStick8_1P(DOWN))
 			result = true;
 		break;
 	case LEFT:
-		if (Input_GetKeyPress('A') || LeftStick8_1P(LEFT))
+		if (Input_GetKeyPress('A') || Input_GetKeyPress(VK_LEFT) || LeftStick8_1P(LEFT))
+			result = true;
+		break;
+	case UPPER_RIGHT:
+		if ((Input_GetKeyPress('W') && Input_GetKeyPress('D')) || (Input_GetKeyPress(VK_UP) && Input_GetKeyPress(VK_RIGHT)) || LeftStick8_1P(UPPER_RIGHT))
+			result = true;
+		break;
+	case LOWER_LEFT:
+		if ((Input_GetKeyPress('S') && Input_GetKeyPress('A')) || (Input_GetKeyPress(VK_DOWN) && Input_GetKeyPress(VK_LEFT)) || LeftStick8_1P(LOWER_LEFT))
+			result = true;
+		break;
+	case LOWER_RIGHT:
+		if ((Input_GetKeyPress('S') && Input_GetKeyPress('D')) || (Input_GetKeyPress(VK_DOWN) && Input_GetKeyPress(VK_RIGHT)) || LeftStick8_1P(LOWER_RIGHT))
+			result = true;
+		break;
+	case UPPER_LEFT:
+		if ((Input_GetKeyPress('W') && Input_GetKeyPress('A')) || (Input_GetKeyPress(VK_UP) && Input_GetKeyPress(VK_LEFT)) || LeftStick8_1P(UPPER_LEFT))
+			result = true;
+		break;
+	}
+
+	return result;
+}
+
+bool Input::GetAxisShort(DIR direction)
+{
+	bool result = false;
+
+	switch (direction)
+	{
+	case UP:
+		if (Input_GetKeyTrigger('W') || Input_GetKeyTrigger(VK_UP) || LeftStick8_1P(UP))
+			result = true;
+		break;
+	case RIGHT:
+		if (Input_GetKeyTrigger('D') || Input_GetKeyTrigger(VK_RIGHT) || LeftStick8_1P(RIGHT))
+			result = true;
+		break;
+	case DOWN:
+		if (Input_GetKeyTrigger('S') || Input_GetKeyTrigger(VK_DOWN) || LeftStick8_1P(DOWN))
+			result = true;
+		break;
+	case LEFT:
+		if (Input_GetKeyTrigger('A') || Input_GetKeyTrigger(VK_LEFT) || LeftStick8_1P(LEFT))
+			result = true;
+		break;
+	case UPPER_RIGHT:
+		if ((Input_GetKeyTrigger('W') && Input_GetKeyTrigger('D')) || (Input_GetKeyTrigger(VK_UP) && Input_GetKeyTrigger(VK_RIGHT)) || LeftStick8_1P(UPPER_RIGHT))
+			result = true;
+		break;
+	case LOWER_LEFT:
+		if ((Input_GetKeyTrigger('S') && Input_GetKeyTrigger('A')) || (Input_GetKeyTrigger(VK_DOWN) && Input_GetKeyTrigger(VK_LEFT)) || LeftStick8_1P(LOWER_LEFT))
+			result = true;
+		break;
+	case LOWER_RIGHT:
+		if ((Input_GetKeyTrigger('S') && Input_GetKeyTrigger('D')) || (Input_GetKeyTrigger(VK_DOWN) && Input_GetKeyTrigger(VK_RIGHT)) || LeftStick8_1P(LOWER_RIGHT))
+			result = true;
+		break;
+	case UPPER_LEFT:
+		if ((Input_GetKeyTrigger('W') && Input_GetKeyTrigger('A')) || (Input_GetKeyTrigger(VK_UP) && Input_GetKeyTrigger(VK_LEFT)) || LeftStick8_1P(UPPER_LEFT))
 			result = true;
 		break;
 	}
@@ -1248,10 +1315,42 @@ bool Input::isInput()
 {
 	bool result = false;
 
-	if (GetAxis(LEFT) || GetAxis(RIGHT))
+	if (GetAxis(LEFT) || GetAxis(RIGHT) || GetAxis(UP) || GetAxis(DOWN) || GetAxis(UPPER_RIGHT) || 
+		GetAxis(LOWER_LEFT) || GetAxis(LOWER_RIGHT) || GetAxis(UPPER_LEFT))
 		result = true;
 	else
 		result = false;
+
+	return result;
+}
+
+bool Input::GetButtonPress(ACTION action)
+{
+	bool result = false;
+
+	switch (action)
+	{
+	case SHOWCIRCLESMALL:
+		if (LongPushButton_1P(GP_LS) || Input_GetKeyPress(VK_RBUTTON))
+			result = true;
+		break;
+	case SHOWCIRCLEBIG:
+		if (LongPushButton_1P(GP_RS) || Input_GetKeyPress(VK_LBUTTON))
+			result = true;
+		break;
+	case OK:
+		if (ShortPushButton_1P(GP_A) || Input_GetKeyTrigger(VK_RETURN))
+			result = true;
+		break;
+	case BACK:
+		if (ShortPushButton_1P(GP_B) || Input_GetKeyTrigger(VK_ESCAPE))
+			result = true;
+		break;
+	case RESTART:
+		if (ShortPushButton_1P(GP_BACK) || Input_GetKeyTrigger(VK_F1))
+			result = true;
+		break;
+	}
 
 	return result;
 }

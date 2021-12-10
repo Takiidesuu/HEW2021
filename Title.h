@@ -2,8 +2,8 @@
 
 #include "Scene.h"
 
-#define BUTTONSIZEX 0.3f
-#define BUTTONSIZEY 0.2f
+#define BUTTONSIZEX 0.2f
+#define BUTTONSIZEY 0.15f
 
 class Title : public Scene
 {
@@ -11,12 +11,19 @@ public:
 	bool Init();
 	bool Update();
 	void Draw();
-	bool SceneChange();
 
 private:
+	CSprite* Teamlogo;
 	CSprite* background;
 	CSprite **sprite;
 	CSprite* playerObj;
+	CEfectPanel* Efectpanel;
+
+	bool logoflg = true;
+
+	bool PressEnyKeyflg = false;
+
+	const int returnTeamlogoTime = 80000;
 
 	Input* inputObj;
 

@@ -1,6 +1,8 @@
 #pragma once
 #include <Windows.h>
 #include <Xinput.h>
+#include <stdio.h>
+#include <string>
 #pragma comment (lib, "xinput.lib")
 
 #define DEADZONE_LX 4
@@ -24,8 +26,6 @@
 #define GP_X		XINPUT_GAMEPAD_X				// Ｃ			ボタン
 #define GP_Y		XINPUT_GAMEPAD_Y				// Ｄ			ボタン
 
-
-
 //------------------------------------------------------------
 // スティックを使用する際の方向指定
 //------------------------------------------------------------
@@ -40,6 +40,15 @@ enum DIR
 	UPPER_RIGHT,	// 右上
 	LOWER_LEFT,		// 左下
 	LOWER_RIGHT,	// 右下
+};
+
+enum ACTION
+{
+	SHOWCIRCLESMALL,		//小さい範囲表示
+	SHOWCIRCLEBIG,			//大きい範囲表示
+	OK,						//選ぶアクション（ENTERキー、Aボタン）
+	BACK,					//戻るアクション（ESCキー、Bキー）
+	RESTART,				//リスタート（デバッグ用）
 };
 
 
@@ -104,6 +113,8 @@ public:
 	bool Input_GetKeyPress(int vkey);
 	bool Input_GetKeyTrigger(int vkey);
 
-	bool GetAxis(DIR direction);
-	bool isInput();
+	bool GetAxis(DIR direction);				//方向インプット（長押し）
+	bool GetAxisShort(DIR direction);			//方向インプット（一回）
+	bool isInput();								//インプットがあるかどうか
+	bool GetButtonPress(ACTION action);			//アクションのインプット
 };

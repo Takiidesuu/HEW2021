@@ -4,6 +4,10 @@ VECTOR moveV[8];  // 移動用ベクトル
 
 RectShape rectA(1.0f, 1.0f, 1.0f, 1.0f);  // 当たり判定用の矩形
 RectShape rectB(1.0f, 1.0f, 1.0f, 1.0f);  // 当たり判定用の矩形
+RectShape rectC(1.0f, 1.0f, 1.0f, 1.0f);  // 当たり判定用の矩形
+
+int Savehitmaphipnum[100][3];			//当たり判定のあるマップチップの配列番号を保存する配列
+int hitmapchipnum = 0;					//当たり判定のあるマップチップの数
 
 bool GameClass::Init()
 {
@@ -25,26 +29,46 @@ bool GameClass::Init()
 		sprite[a] = NULL;
 	}
 
-	MapChips = new CSprite**[MAP_SIZE_HEIGHT];
+	MapChips = new CGameObject**[MAPCHIP_NUM_HEIGHT];
+
+	for (int i = 0; i < MAPCHIP_NUM_HEIGHT; i++) {
+		MapChips[i] = new CGameObject*[MAPCHIP_NUM_WIDTH];
+		for (int j = 0; j < MAPCHIP_NUM_WIDTH; j++) {
+			MapChips[i][j] = new CGameObject("assets/MapChip.png", 4, 1, -1 + j * 2 * (float)MAPCHIP_SIZE_WIDTH / (float)RESOLUTIONX + ((float)MAPCHIP_SIZE_WIDTH / (float)RESOLUTIONX), 1 - i * 2 * (float)MAPCHIP_SIZE_HEIGHT / (float)RESOLUTIONY - ((float)MAPCHIP_SIZE_HEIGHT / (float)RESOLUTIONY), (float)MAPCHIP_SIZE_WIDTH / (float)RESOLUTIONX * 2, (float)MAPCHIP_SIZE_HEIGHT / (float)RESOLUTIONY * 2, 80.0f, 16.0f);
+			MapChips[i][j]->SetPart(MapChipDate[i][j], 0);
+			if (MapChipDate[i][j]) {
+				Savehitmaphipnum[hitmapchipnum][0] = i;
+				Savehitmaphipnum[hitmapchipnum][1] = j;
+				Savehitmaphipnum[hitmapchipnum][2] = MapChipDate[i][j];
+				hitmapchipnum++;
+			}
+		}
+	}
+
+	circleSizeReal = circleSize;
 
 	//それぞれのオブジェクト配列に画像のデータを読み込んで、初期化する
-	sprite[0] = new CGameObject("assets/char.png", 8, 4, 0.0f, 0.0f, 0.15f, 0.15f);
+
+	//プレイヤー
+	sprite[0] = new CGameObject("assets/player.png", 1, 1, -0.25f, -0.7 + 0.15f / 2.0f, 0.15f * (float)RESOLUTIONY / (float)RESOLUTIONX, 0.15f);
+
+
 	sprite[1] = new CGameObject("assets/effect001.png", 1, 1, 0.0f, 0.0f, 0.15f, 0.15f);
 
-	sprite[2] = new CGameObject("assets/ground.png", 1, 1, 0.0f, GROUND_Y, 4.0f, 0.2f);
-	sprite[2]->enabled = true;
+	sprite[3] = new CGameObject("assets/circle.png", 1, 1, 0.0f, 0.0f, circleSize * (float)RESOLUTIONY / (float)RESOLUTIONX, circleSize);
+	sprite[3]->enabled = false;
 
-	sprite[3] = new CGameObject("assets/circle.png", 1, 1, 0.0f, 0.0f, 2.6f, 2.6f);
-	sprite[3]->enabled = true;
-
-	sprite[6] = new CGameObject("assets/slime.png", 9, 6, 0.0f, 0.0f, 0.15f, 0.15f);
+	sprite[6] = new CGameObject("assets/enemy.png", 1, 1, 0.25f, 0.0f, 0.15f, 0.15f);
 	sprite[6]->enabled = true;
 
 	sprite[10] = new CGameObject("assets/tpEffect1.png", 1, 1, 0.0f, 0.0f, 0.15f, 0.15f);
 	sprite[11] = new CGameObject("assets/tpEffect2.png", 1, 1, 0.0f, 0.0f, 0.15f, 0.15f);
 	sprite[12] = new CGameObject("assets/tpEffect3.png", 1, 1, 0.0f, 0.0f, 0.15f, 0.15f);
 
-	background = new CSprite("assets/background.jpg", 1, 1, 1.0f, 1.0f, 4.0f, 4.0f);
+	BlackoutPanel = new CSprite("assets/EfectPanel.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f);
+	BlackoutPanel->SetColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+	background = new CGameObject("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f);
 
 	playerObj = sprite[0];
 
@@ -59,388 +83,173 @@ bool GameClass::Init()
 
 bool GameClass::Update()
 {
-	//インプットオブジェクトをアップデート
-	inputObj->Input_Update();
+	if (showCircle) {
+		slowcnt++;
 
-	//ESCキー押したら、プログラム強制終了
-	if (inputObj->Input_GetKeyTrigger(VK_ESCAPE))
-		return false;
+		BlackoutPanel->SetColor(0.0f, 0.0f, 0.0f, SLOW_DARKNESS);
 
-	//プレイヤーの座標を取得
-	float DragonPosX = playerObj->GetPos('x');
-	float DragonPosY = playerObj->GetPos('y');
-
-	//プレイヤーの向き
-	static int DragonDirection = 1;
-	static int moveAnim = 1;
-	static bool isMoving = false;
-
-	//瞬間移動用
-	static int tpAnim = 0;				//フレーム数
-	static bool tpAnimFlg = false;		//瞬間移動アニメーションフラグ（実行するかどうか）
-	static int tpAnimPart = 9;
-	static int tpAnimSize = 99 / TELEPORTSIZE;
-	static int tpPlaceHolder = 0;
-
-	static float GhostPosX = 0.0f;
-	static float GhostPosY = 0.0f;
-	static float GhostSizeX = 0.15f;
-	static float GhostSizeY = 0.15f;
-	static bool GhostCanMove = false;  // ゴーストが移動できるかどうか
-	static bool GhostNowMove = false;  // ゴーストが移動中かどうか
-	static int GhostMoveDir0 = MOVE_DIR_NONE;  // ゴーストの移動方向を仮保存するための変数
-	static int GhostMoveDir = MOVE_DIR_NONE;  // ゴーストの移動方向を保存する変数
-	static float GhostMoveCoefficient = 0.0003f;  // ゴーストの移動量の係数
-
-	static bool hit_flg = false;  // 当たり判定用の変数
-
-	//瞬間移動できるかどうかのフラグ
-	static bool Teleport_flg = false;
-
-	// 当たり判定用の矩形にドラゴンとゴーストの大きさを渡す
-	rectA.SetSize(0.15f, 0.15f);
-	rectB.SetSize(GhostSizeX, GhostSizeY);
-
-	//移動できる場合（瞬間移動してない場合）
-	if (tpAnim == 0 && !tpAnimFlg)
-	{
-		if (inputObj->isInput())	//インプットがあったら
-		{
-			//左方向に行ったら
-			if (inputObj->GetAxis(LEFT)) {
-				DragonPosX -= 0.0006f * MOVESPEED;
-				DragonDirection = 0;
-				if ((inputObj->Input_GetKeyTrigger(VK_LBUTTON)) && (Teleport_flg == false)) {
-					Teleport_flg = true;
-					tpAnimFlg = true;
-					tpAnimPart = 9;
-				}
-			}
-
-			if (inputObj->GetAxis(RIGHT)) {
-				DragonPosX += 0.0006f * MOVESPEED;
-				DragonDirection = 1;
-				if ((inputObj->Input_GetKeyTrigger(VK_LBUTTON)) && (Teleport_flg == false)) {
-					tpAnimFlg = true;
-					Teleport_flg = true;
-					tpAnimPart = 9;
-				}
-			}
-
-			isMoving = true;
-		}
-		else
-			isMoving = false;
-	}
-
-	if (Teleport_flg == true) {
-		static int cnt = 0;
-		cnt++;
-		if (cnt >= 1000) {
-			Teleport_flg = false;
-			cnt = 0;
+		if (slowcnt > SLOW_SPEED) {
+			slowcnt = 0;
 		}
 	}
 
-	//瞬間移動アニメーションフラグがtrueの場合、カウント始まる
-	if (tpAnimFlg)
-	{
-		tpAnim++;
-	}
+	if ((!showCircle) || (slowcnt == SLOW_SPEED)) {
 
-	//瞬間移動アニメーション処理
-	if (tpAnim <= 0)					//通常の時
-		playerObj = sprite[0];
-	if (tpAnim >= 1 && tpAnim <= 99)	//瞬間移動アニメーション入る
-	{
-		if (tpAnim == 1 || tpAnim == tpPlaceHolder)
+		if (!showCircle)
+			BlackoutPanel->SetColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+		slowcnt = 0;
+
+		//インプットオブジェクトをアップデート
+		inputObj->Input_Update();
+
+		//ESCキー押したら、プログラム強制終了
+		if (inputObj->Input_GetKeyTrigger(VK_ESCAPE))
+			return false;
+
+		if (inputObj->GetButtonPress(RESTART))
+			Init();
+
+		//プレイヤーの座標を取得
+		DragonPosX = playerObj->GetPos('x');
+		DragonPosY = playerObj->GetPos('y');
+
+		GhostPosX = sprite[6]->GetPos('x');
+		GhostPosY = sprite[6]->GetPos('y');
+
+		//瞬間移動できるかどうかのフラグ
+		static bool Teleport_flg = false;
+
+		//移動できる場合（瞬間移動してない場合）
+		if (tpAnim == 0 && !tpAnimFlg)
 		{
-			tpAnimPart++;
-			playerObj = sprite[tpAnimPart];
-			tpPlaceHolder = tpAnim + tpAnimSize;
-		}
-	}
-	if (tpAnim >= 100 && tpAnim <= 199)					//瞬間移動
-	{
-		if ((tpAnim - 100) % 11 == 0)
-		{
-			//向きによって、移動する方向が変わる
-			switch (DragonDirection)
+			if (inputObj->isInput())	//インプットがあったら
 			{
-			case 0: DragonPosX -= 0.05f;
-				break;
-			case 1: DragonPosX += 0.05f;
-				break;
+				if (Teleport_flg == false)
+				{
+					if (inputObj->GetAxis(UP))
+					{
+						DragonDirection = 0;
+					}
+					if (inputObj->GetAxis(RIGHT))
+					{
+						DragonDirection = 1;
+					}
+					if (inputObj->GetAxis(DOWN))
+					{
+						DragonDirection = 2;
+					}
+					if (inputObj->GetAxis(LEFT))
+					{
+						DragonDirection = 3;
+					}
+					if (inputObj->GetAxis(UPPER_LEFT))
+					{
+						DragonDirection = 4;
+					}
+					if (inputObj->GetAxis(UPPER_RIGHT))
+					{
+						DragonDirection = 5;
+					}
+					if (inputObj->GetAxis(LOWER_LEFT))
+					{
+						DragonDirection = 6;
+					}
+					if (inputObj->GetAxis(LOWER_RIGHT))
+					{
+						DragonDirection = 7;
+					}
+
+					stick_flg = true;
+
+					circleSizeReal += CIRCLE_SIZE_ADDITIONAL_SPEED;
+
+					if (circleSizeReal >= CIRCLE_SIZE_MAXIMUM) {
+						circleSizeReal = CIRCLE_SIZE_MAXIMUM;
+					}
+
+					showCircle = true;
+
+					sprite[3]->SetSize(circleSizeReal, circleSizeReal);
+					sprite[3]->enabled = showCircle;
+				}
+
+				
+			}
+			else if (stick_flg) {
+				showCircle = false;
+				sprite[3]->enabled = showCircle;
+				stick_flg = false;
+				Teleport_flg = true;
+				tpAnimFlg = true;
+				tpAnimPart = 9;
+			}
+
+		}
+
+		if (Teleport_flg == true) {
+			static int cnt = 0;
+			cnt++;
+			if (cnt >= 100) {
+				Teleport_flg = false;
+				cnt = 0;
 			}
 		}
-	}
-	if (tpAnim >= 200 && tpAnim <= 299)	//瞬間移動アニメーション入る（出る）
-	{
-		if (tpAnim == 200 || tpAnim == tpPlaceHolder)
+
+		//瞬間移動アニメーションフラグがtrueの場合、カウント始まる
+		if (tpAnimFlg)
 		{
-			playerObj = sprite[tpAnimPart];
-			tpAnimPart--;
-			tpPlaceHolder = tpAnim + tpAnimSize;
+			tpAnim++;
 		}
-	}
-	if (tpAnim == 300)					//通常の状態に戻す
-	{
-		playerObj = sprite[0];
-		tpAnimFlg = false;
-		tpAnimPart = 9;
-		tpAnim = 0;
 
-		// 当たり判定用の矩形にそれぞれの大きさを渡す
-		rectA.SetPos(DragonPosX, DragonPosY);
-		rectB.SetPos(GhostPosX, GhostPosY);
+		//Teleport();
 
-		// 矩形同士で当たり判定をとる
-		hit_flg = Collision::RectAndRectTest(rectA, rectB);
+		NewMove();
 
-		if (hit_flg) {  // 当たってたら
+		// ゴーストの移動処理
+		if (GhostNowMove) {
+			EnemyMove();
+		}
 
-			float rad = Angle(DragonPosX, DragonPosY, GhostPosX, GhostPosY);  // ドラゴンとゴーストの中心同士を結んだ線の角度を計算
+		playerObj->SetPos(DragonPosX, DragonPosY);
 
-			// 角度によってドラゴンの位置を補正する
-			if ((rad >= -PI && rad <= -PI * 7.0f / 8.0f) || (rad >= PI * 7.0f / 8.0f && rad <= PI)) {
-				DragonPosX = GhostPosX - GhostSizeX * 0.6f;
-				DragonPosY = GhostPosY - 0.0f;
+		for (int a = 0; a < 2; a++)
+			sprite[a]->SetPos(DragonPosX, DragonPosY);
 
-				GhostMoveDir0 = MOVE_DIR_RIGHT;
-			}
-			else if (rad > -PI * 7.0f / 8.0f && rad < -PI * 5.0f / 8.0f) {
-				DragonPosX = GhostPosX - GhostSizeX * 0.6f;
-				DragonPosY = GhostPosY - GhostSizeY * 0.6f;
+		sprite[6]->SetPos(GhostPosX, GhostPosY);
 
-				GhostMoveDir0 = MOVE_DIR_UPPER_RIGHT;
-			}
-			else if (rad >= -PI * 5.0f / 8.0f && rad <= -PI * 3.0f / 8.0f) {
-				DragonPosX = GhostPosX - 0.0f;
-				DragonPosY = GhostPosY - GhostSizeY * 0.6f;
-
-				GhostMoveDir0 = MOVE_DIR_UP;
-			}
-			else if (rad > -PI * 3.0f / 8.0f && rad < -PI * 1.0f / 8.0f) {
-				DragonPosX = GhostPosX + GhostSizeX * 0.6f;
-				DragonPosY = GhostPosY - GhostSizeY * 0.6f;
-
-				GhostMoveDir0 = MOVE_DIR_UPPER_LEFT;
-			}
-			else if (rad >= -PI * 1.0f / 8.0f && rad <= PI * 1.0f / 8.0f) {
-				DragonPosX = GhostPosX + GhostSizeX * 0.6f;
-				DragonPosY = GhostPosY + 0.0f;
-
-				GhostMoveDir0 = MOVE_DIR_LEFT;
-			}
-			else if (rad > PI * 1.0f / 8.0f && rad < PI * 3.0f / 8.0f) {
-				DragonPosX = GhostPosX + GhostSizeX * 0.6f;
-				DragonPosY = GhostPosY + GhostSizeY * 0.6f;
-
-				GhostMoveDir0 = MOVE_DIR_LOWER_LEFT;
-			}
-			else if (rad >= PI * 3.0f / 8.0f && rad <= PI * 5.0f / 8.0f) {
-				DragonPosX = GhostPosX - 0.0f;
-				DragonPosY = GhostPosY + GhostSizeY * 0.6f;
-
-				GhostMoveDir0 = MOVE_DIR_DOWN;
-			}
-			else if (rad > PI * 5.0f / 8.0f && rad < PI * 7.0f / 8.0f) {
-				DragonPosX = GhostPosX - GhostSizeX * 0.6f;
-				DragonPosY = GhostPosY + GhostSizeY * 0.6f;
-
-				GhostMoveDir0 = MOVE_DIR_LOWER_RIGHT;
-			}
-
-			// ゴーストが移動中なら先回りするように少し先に移動する
-			if (GhostNowMove) {
-				switch (GhostMoveDir) {
-				case MOVE_DIR_RIGHT:
-					DragonPosX += GhostMoveCoefficient * moveV[0].vx * 252.0f;
-					DragonPosY += GhostMoveCoefficient * moveV[0].vy * 252.0f;
-
-					break;
-
-				case MOVE_DIR_UPPER_RIGHT:
-					DragonPosX += GhostMoveCoefficient * moveV[1].vx * 252.0f;
-					DragonPosY += GhostMoveCoefficient * moveV[1].vy * 252.0f;
-
-					break;
-
-				case MOVE_DIR_UP:
-					DragonPosX += GhostMoveCoefficient * moveV[2].vx * 252.0f;
-					DragonPosY += GhostMoveCoefficient * moveV[2].vy * 252.0f;
-
-					break;
-
-				case MOVE_DIR_UPPER_LEFT:
-					DragonPosX += GhostMoveCoefficient * moveV[3].vx * 252.0f;
-					DragonPosY += GhostMoveCoefficient * moveV[3].vy * 252.0f;
-
-					break;
-
-				case MOVE_DIR_LEFT:
-					DragonPosX += GhostMoveCoefficient * moveV[4].vx * 252.0f;
-					DragonPosY += GhostMoveCoefficient * moveV[4].vy * 252.0f;
-
-					break;
-
-				case MOVE_DIR_LOWER_LEFT:
-					DragonPosX += GhostMoveCoefficient * moveV[5].vx * 252.0f;
-					DragonPosY += GhostMoveCoefficient * moveV[5].vy * 252.0f;
-
-					break;
-
-				case MOVE_DIR_DOWN:
-					DragonPosX += GhostMoveCoefficient * moveV[6].vx * 252.0f;
-					DragonPosY += GhostMoveCoefficient * moveV[6].vy * 252.0f;
-
-					break;
-
-				case MOVE_DIR_LOWER_RIGHT:
-					DragonPosX += GhostMoveCoefficient * moveV[7].vx * 252.0f;
-					DragonPosY += GhostMoveCoefficient * moveV[7].vy * 252.0f;
-
-					break;
+		//敵が地面となるマップチップに接地しているかの処理
+		if (!GhostNowMove) {
+			sprite[6]->nowAir = true;
+			for (int i = 0; i < hitmapchipnum; i++) {
+				if ((Collision::RectAndRectHit(sprite[6]->GetPosAndSize(), MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize())) && (sprite[6]->nowAir)) {
+					sprite[6]->nowAir = false;
+					GhostPosY = MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy + (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey + sprite[6]->GetPosAndSize().sizey) / 2;
+					sprite[6]->SetPos(GhostPosX, GhostPosY);
 				}
 			}
-
-			GhostCanMove = true;
 		}
 
-		if (GhostCanMove) {  // ゴーストに当たってたらゴーストの移動処理を始める
-			GhostNowMove = true;
-			GhostCanMove = false;
-			GhostMoveCoefficient += 0.00001f;
-			GhostMoveDir = GhostMoveDir0;
-			GhostMoveDir0 = MOVE_DIR_NONE;
-		}
-	}
+	
+		sprite[6]->Gravity();	//敵の重力
+	
 
-	// ゴーストの移動処理
-	if (GhostNowMove) {
-		// はじかれた方向に移動する
-		switch (GhostMoveDir)
-		{
-		case MOVE_DIR_RIGHT:
-			GhostPosX += GhostMoveCoefficient * moveV[0].vx;
-			GhostPosY += GhostMoveCoefficient * moveV[0].vy;
-
-			break;
-
-		case MOVE_DIR_UPPER_RIGHT:
-			GhostPosX += GhostMoveCoefficient * moveV[1].vx;
-			GhostPosY += GhostMoveCoefficient * moveV[1].vy;
-
-			break;
-
-		case MOVE_DIR_UP:
-			GhostPosX += GhostMoveCoefficient * moveV[2].vx;
-			GhostPosY += GhostMoveCoefficient * moveV[2].vy;
-
-			break;
-
-		case MOVE_DIR_UPPER_LEFT:
-			GhostPosX += GhostMoveCoefficient * moveV[3].vx;
-			GhostPosY += GhostMoveCoefficient * moveV[3].vy;
-
-			break;
-
-		case MOVE_DIR_LEFT:
-			GhostPosX += GhostMoveCoefficient * moveV[4].vx;
-			GhostPosY += GhostMoveCoefficient * moveV[4].vy;
-
-			break;
-
-		case MOVE_DIR_LOWER_LEFT:
-			GhostPosX += GhostMoveCoefficient * moveV[5].vx;
-			GhostPosY += GhostMoveCoefficient * moveV[5].vy;
-
-			break;
-
-		case MOVE_DIR_DOWN:
-			GhostPosX += GhostMoveCoefficient * moveV[6].vx;
-			GhostPosY += GhostMoveCoefficient * moveV[6].vy;
-
-			break;
-
-		case MOVE_DIR_LOWER_RIGHT:
-			GhostPosX += GhostMoveCoefficient * moveV[7].vx;
-			GhostPosY += GhostMoveCoefficient * moveV[7].vy;
-
-			break;
-		}
-	}
-
-	////カメラの位置をプレイヤーと合わせる
-	//CSprite::mCameraPosX = DragonPosX; //カメラの位置を操作キャラクターに追従させる
-	//CSprite::mCameraPosY = DragonPosY;
-
-	playerObj->SetPos(DragonPosX, DragonPosY);
-
-	for (int a = 0; a < 2; a++)
-		sprite[a]->SetPos(DragonPosX, DragonPosY);
-
-	static bool canJump = true;
-	static bool isJumping = false;
-
-	if (inputObj->Input_GetKeyTrigger(VK_SPACE) && canJump)
-	{
-		canJump = false;
-		isJumping = true;
-	}
-
-	if (inputObj->Input_GetKeyTrigger(VK_RETURN))
-		completedLevel++;
-
-	if (isJumping)
-	{
-		if (!sprite[0]->GetNowAir() || sprite[0]->GetNowJump())
-		{
-			sprite[0]->GravityJump();  // 重力でのジャンプ
-			//player.SinJump();  // 三角関数でのジャンプ
-		}
-		else
-		{
-			isJumping = false;
-			canJump = true;
-		}
-	}
-
-	sprite[6]->SetPos(GhostPosX, GhostPosY);
-
-	playerObj->Gravity();	//重力でのジャンプのときの重力
-
-
-
-	sprite[6]->Gravity();	//敵の重力
-
-	sprite[3]->SetPos(playerObj->GetPos('x'), playerObj->GetPos('y'));	//範囲表示オブジェクトの位置を設定
-
-	static int cnt = 0;			//アニメーション用のカウンター
-	static int animPart = 0;	//アニメーションのパーツ
-
-	if (isMoving && !tpAnimFlg)
-	{
-		cnt++;
-
-		if (cnt % 100 == 0)
-		{
-			animPart++;
-			if (animPart > 7)
-				animPart = 1;
+	//コンボ中断時の処理
+		if (!GhostNowMove) {
+			EnemyCombo = 0;
+			if (ENEMY_SIZE_INITIALIZE) {
+				GhostSizeX = 0.15f;
+				GhostSizeY = 0.15f;
+			}
 		}
 
-		playerObj->SetPart(animPart, DragonDirection + 1);
-	}
-	else
-	{
-		cnt = 0;
-		animPart = 0;
+		sprite[6]->SetSize(GhostSizeX, GhostSizeY);
 
-		playerObj->SetPart(0, 0);
-	}
+		sprite[3]->SetPos(playerObj->GetPos('x'), playerObj->GetPos('y'));	//範囲表示オブジェクトの位置を設定
 
-	Draw();
+		Draw();
+
+	}
 
 	return true;
 }
@@ -453,6 +262,12 @@ void GameClass::Draw()
 
 	background->Draw();
 
+	for (int i = 0; i < hitmapchipnum; i++) {
+		MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->Draw();
+	}
+
+	BlackoutPanel->Draw();
+
 	playerObj->Draw();
 
 	for (int a = 0; a < MAXSPRITE; a++)
@@ -464,9 +279,438 @@ void GameClass::Draw()
 	Direct3D_GetSwapChain()->Present(0, 0);
 }
 
+void GameClass::Uninit()
+{
+	for (int i = 0; i < MAPCHIP_NUM_HEIGHT; i++) {
+		for (int j = 0; j < MAPCHIP_NUM_WIDTH; j++) {
+			delete MapChips[i][j];
+		}
+	}
+
+	for (int i = 0; i < MAPCHIP_NUM_HEIGHT; i++) {
+		delete MapChips[i];
+	}
+
+	delete[] MapChips;
+
+	delete background;
+	delete playerObj;
+
+	/*for (int i = 0; i < MAXSPRITE; i++) {
+		delete sprite[i];
+	}
+
+	delete[] sprite;*/
+}
+
 float Angle(float x1, float y1, float x2, float y2)
 {
 	double radian = atan2((double)(y1 - y2), (double)(x1 - x2));
 
 	return (float)radian;
+}
+
+void GameClass::EnemyMove()
+{
+	/*dirX = 1.0f;
+	dirX = 1.0f;*/
+
+	if (GhostMoveCoefficient > 0.0f)
+	{
+		GhostMoveCoefficient -= ENEMY_ATTENUATION;
+
+		bool hitMapchip_Enemy = false;
+		//マップチップと敵との当たり判定
+		for (int i = 0; i < hitmapchipnum; i++) {
+
+			if ((Collision::RectAndRectHit(sprite[6]->GetPosAndSize(), MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize())) && (!hitMapchip_Enemy)) {
+
+				float range_with_ground = ((sprite[6]->GetPosAndSize().posy + sprite[6]->GetPosAndSize().sizey / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy - MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey / 2));
+
+				float range_with_ceiling = ((sprite[6]->GetPosAndSize().posy - sprite[6]->GetPosAndSize().sizey / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy + MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey / 2));
+
+				float range_with_rightwall = ((sprite[6]->GetPosAndSize().posx + sprite[6]->GetPosAndSize().sizex / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx - MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex / 2)) * (float)RESOLUTIONY / (float)RESOLUTIONX;
+
+				float range_with_leftwall = ((sprite[6]->GetPosAndSize().posx - sprite[6]->GetPosAndSize().sizex / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx + MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex / 2))  * (float)RESOLUTIONY / (float)RESOLUTIONX;
+
+				if (range_with_ground < 0)
+					range_with_ground *= -1.0f;
+
+				if (range_with_ceiling < 0)
+					range_with_ceiling *= -1.0f;
+
+				if (range_with_rightwall < 0)
+					range_with_rightwall *= -1.0f;
+
+				if (range_with_leftwall < 0)
+					range_with_leftwall *= -1.0f;
+
+				switch (GhostMoveDir)
+				{
+				case MOVE_DIR_RIGHT:
+				case MOVE_DIR_LEFT:
+					dirX *= -1.0f;
+					break;
+
+				case MOVE_DIR_UP:
+				case MOVE_DIR_DOWN:
+					dirY *= -1.0f;
+					break;
+
+				case MOVE_DIR_UPPER_LEFT:
+				case MOVE_DIR_UPPER_RIGHT:
+				case MOVE_DIR_LOWER_LEFT:
+				case MOVE_DIR_LOWER_RIGHT:
+
+					if ((range_with_leftwall < 0.003) || (range_with_rightwall < 0.003))
+						dirX *= -1.0f;
+
+					if ((range_with_ceiling < 0.003) || (range_with_ground < 0.003))
+						dirY *= -1.0f;
+
+					break;
+				}
+
+				hitMapchip_Enemy = true;
+			}
+		}
+
+		// はじかれた方向に移動する
+		switch (GhostMoveDir)
+		{
+		case MOVE_DIR_RIGHT:
+			GhostPosX += GhostMoveCoefficient * moveV[0].vx * dirX * 0.4f;
+			GhostPosY += GhostMoveCoefficient * moveV[0].vy * dirY * 0.4f;
+
+			break;
+
+		case MOVE_DIR_UPPER_RIGHT:
+			GhostPosX += GhostMoveCoefficient * moveV[1].vx * dirX * 0.4f;
+			GhostPosY += GhostMoveCoefficient * moveV[1].vy * dirY * 0.4f;
+
+			break;
+
+		case MOVE_DIR_UP:
+			GhostPosX += GhostMoveCoefficient * moveV[2].vx * dirX * 0.4f;
+			GhostPosY += GhostMoveCoefficient * moveV[2].vy * dirY * 0.4f;
+
+			break;
+
+		case MOVE_DIR_UPPER_LEFT:
+			GhostPosX += GhostMoveCoefficient * moveV[3].vx * dirX * 0.4f;
+			GhostPosY += GhostMoveCoefficient * moveV[3].vy * dirY * 0.4f;
+
+			break;
+
+		case MOVE_DIR_LEFT:
+			GhostPosX += GhostMoveCoefficient * moveV[4].vx * dirX * 0.4f;
+			GhostPosY += GhostMoveCoefficient * moveV[4].vy * dirY * 0.4f;
+
+			break;
+
+		case MOVE_DIR_LOWER_LEFT:
+			GhostPosX += GhostMoveCoefficient * moveV[5].vx * dirX * 0.4f;
+			GhostPosY += GhostMoveCoefficient * moveV[5].vy * dirY * 0.4f;
+
+			break;
+
+		case MOVE_DIR_DOWN:
+			GhostPosX += GhostMoveCoefficient * moveV[6].vx * dirX * 0.4f;
+			GhostPosY += GhostMoveCoefficient * moveV[6].vy * dirY * 0.4f;
+
+			break;
+
+		case MOVE_DIR_LOWER_RIGHT:
+			GhostPosX += GhostMoveCoefficient * moveV[7].vx * dirX * 0.4f;
+			GhostPosY += GhostMoveCoefficient * moveV[7].vy * dirY * 0.4f;
+
+			break;
+		}
+
+		GhostMoveCnt++;
+	}
+	else
+	{
+		GhostNowMove = false;
+		dirX = 1.0f;
+		dirY = 1.0f;
+		sprite[6]->SetAirTime(0.0f);
+		GhostMoveCnt = 0;
+		GhostMoveCoefficient = PLAYER_PUNCH_POWER_MINIMUM;
+		sprite[6]->SetNowAir(true);
+	}
+}
+
+void GameClass::NewMove()
+{
+	if (tpAnim <= 0)					//通常の時
+		playerObj = sprite[0];
+
+	if (tpAnim == 1) {
+		rectB.SetPos(GhostPosX, GhostPosY);
+		rectB.SetSize(GhostSizeX, GhostSizeY);
+
+		switch (DragonDirection)
+		{
+			//up
+		case 0:
+			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX, DragonPosY + circleSizeReal * 0.23f);
+			break;
+
+			//right
+		case 1:
+			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f, DragonPosY);
+			break;
+
+			//down
+		case 2:
+			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX, DragonPosY - circleSizeReal * 0.23f);
+			break;
+
+			//left
+		case 3:
+			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX - circleSizeReal * 0.23f, DragonPosY);
+			break;
+
+			// 左上
+		case 4:
+			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f * moveV[3].vx, DragonPosY + circleSizeReal * 0.23f * moveV[3].vy);
+			break;
+
+			// 右上
+		case 5:
+			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f * moveV[1].vx, DragonPosY + circleSizeReal * 0.23f * moveV[1].vy);
+			break;
+
+			// 左下
+		case 6:
+			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f * moveV[5].vx, DragonPosY + circleSizeReal * 0.23f * moveV[5].vy);
+			break;
+
+			// 右下
+		case 7:
+			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f * moveV[7].vx, DragonPosY + circleSizeReal * 0.23f * moveV[7].vy);
+			break;
+		}
+	}
+
+	if (tpAnim >= 2 && tpAnim <= 100)	//瞬間移動アニメーション入る
+	{
+		if (tpAnim == 2 || tpAnim - 1 == tpPlaceHolder)
+		{
+			tpAnimPart++;
+			playerObj = sprite[tpAnimPart];
+			tpPlaceHolder = tpAnim + tpAnimSize;
+		}
+	}
+
+	if (tpAnim == 101)
+	{
+		Old_Player_PosX = DragonPosX;
+		Old_Player_PosY = DragonPosY;
+
+		switch (DragonDirection)
+		{
+			//up
+		case 0:
+			if (hit_flg) {
+				DragonPosX = GhostPosX;
+				DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+
+				GhostMoveDir0 = MOVE_DIR_UP;
+				GhostMoveDir = MOVE_DIR_NONE;
+				GhostCanMove = true;
+			}
+			else {
+				DragonPosY += circleSizeReal * 0.23f;
+			}
+			break;
+
+			//right
+		case 1:
+			if (hit_flg) {
+				DragonPosX = GhostPosX - GhostSizeX / 2.0f;
+				DragonPosY = GhostPosY;
+
+				GhostMoveDir0 = MOVE_DIR_RIGHT;
+				GhostMoveDir = MOVE_DIR_NONE;
+				GhostCanMove = true;
+			}
+			else {
+				DragonPosX += circleSizeReal * 0.23f;
+			}
+			break;
+
+			//down
+		case 2:
+			if (hit_flg) {
+				DragonPosX = GhostPosX;
+				DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+
+				GhostMoveDir0 = MOVE_DIR_DOWN;
+				GhostMoveDir = MOVE_DIR_NONE;
+				GhostCanMove = true;
+			}
+			else {
+				DragonPosY -= circleSizeReal * 0.23f;
+			}
+			break;
+
+			//left
+		case 3:
+			if (hit_flg) {
+				DragonPosX = GhostPosX + GhostSizeX / 2.0f;
+				DragonPosY = GhostPosY;
+
+				GhostMoveDir0 = MOVE_DIR_LEFT;
+				GhostMoveDir = MOVE_DIR_NONE;
+				GhostCanMove = true;
+			}
+			else {
+				DragonPosX -= circleSizeReal * 0.23f;
+			}
+			break;
+
+			// 左上
+		case 4:
+			if (hit_flg) {
+				DragonPosX = GhostPosX + GhostSizeX / 2.0f;
+				DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+
+				GhostMoveDir0 = MOVE_DIR_UPPER_LEFT;
+				GhostMoveDir = MOVE_DIR_NONE;
+				GhostCanMove = true;
+			}
+			else {
+				DragonPosX += circleSizeReal * 0.23f * moveV[3].vx;
+				DragonPosY += circleSizeReal * 0.23f * moveV[3].vy;
+			}
+			break;
+
+			// 右上
+		case 5:
+			if (hit_flg) {
+				DragonPosX = GhostPosX - GhostSizeX / 2.0f;
+				DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+
+				GhostMoveDir0 = MOVE_DIR_UPPER_RIGHT;
+				GhostMoveDir = MOVE_DIR_NONE;
+				GhostCanMove = true;
+			}
+			else {
+				DragonPosX += circleSizeReal * 0.23f * moveV[1].vx;
+				DragonPosY += circleSizeReal * 0.23f * moveV[1].vy;
+			}
+			break;
+
+			// 左下
+		case 6:
+			if (hit_flg) {
+				DragonPosX = GhostPosX + GhostSizeX / 2.0f;
+				DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+
+				GhostMoveDir0 = MOVE_DIR_LOWER_LEFT;
+				GhostMoveDir = MOVE_DIR_NONE;
+				GhostCanMove = true;
+			}
+			else {
+				DragonPosX += circleSizeReal * 0.23f * moveV[5].vx;
+				DragonPosY += circleSizeReal * 0.23f * moveV[5].vy;
+			}
+			break;
+
+			// 右下
+		case 7:
+			if (hit_flg) {
+				DragonPosX = GhostPosX - GhostSizeX / 2.0f;
+				DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+
+				GhostMoveDir0 = MOVE_DIR_LOWER_RIGHT;
+				GhostMoveDir = MOVE_DIR_NONE;
+				GhostCanMove = true;
+			}
+			else {
+				DragonPosX += circleSizeReal * 0.23f * moveV[7].vx;
+				DragonPosY += circleSizeReal * 0.23f * moveV[7].vy;
+			}
+			break;
+		}
+
+		playerObj->SetPos(DragonPosX, DragonPosY);
+	}
+
+	if (tpAnim >= 102 && tpAnim <= 200)	//瞬間移動アニメーション入る（出る）
+	{
+		if (tpAnim == 102 || tpAnim - 1 == tpPlaceHolder)
+		{
+			playerObj = sprite[tpAnimPart];
+			tpAnimPart--;
+			tpPlaceHolder = tpAnim + tpAnimSize;
+		}
+	}
+
+	if (tpAnim == 201)					//通常の状態に戻す
+	{
+		playerObj = sprite[0];
+		tpAnimFlg = false;
+		tpAnimPart = 9;
+		tpAnim = 0;
+		circleSizeReal = circleSize;
+
+		if (GhostCanMove) {  // 敵に当たってたらゴーストの移動処理を始める
+			GhostNowMove = true;
+			GhostCanMove = false;
+			GhostMoveDir = GhostMoveDir0;
+			GhostMoveDir0 = MOVE_DIR_NONE;
+			GhostMoveCnt = 0;
+			GhostSizeX += ENEMY_EXPAND_SIZE;
+			GhostSizeY += ENEMY_EXPAND_SIZE;
+			if (GhostSizeX >= ENEMY_SIZE_MAXIMUM) {
+				GhostSizeX = ENEMY_SIZE_MAXIMUM;
+			}
+			if (GhostSizeY >= ENEMY_SIZE_MAXIMUM) {
+				GhostSizeY = ENEMY_SIZE_MAXIMUM;
+			}
+			dirX = 1.0f;
+			dirY = 1.0f;
+			sprite[6]->SetSize(GhostSizeX, GhostSizeY);
+
+			//サイズ変更によるマップチップとの被りを無くす処理
+			for (int i = 0; i < hitmapchipnum; i++) {
+				if (Collision::RectAndRectHit(sprite[6]->GetPosAndSize(), MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize())) {
+					float range_with_ground = ((sprite[6]->GetPosAndSize().posy - sprite[6]->GetPosAndSize().sizey / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy + MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey / 2));
+
+					float range_with_ceiling = ((sprite[6]->GetPosAndSize().posy + sprite[6]->GetPosAndSize().sizey / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy - MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey / 2));
+
+					float range_with_rightwall = ((sprite[6]->GetPosAndSize().posx + sprite[6]->GetPosAndSize().sizex / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx - MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex / 2));
+
+					float range_with_leftwall = ((sprite[6]->GetPosAndSize().posx - sprite[6]->GetPosAndSize().sizex / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx + MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex / 2));
+
+					if ((range_with_ground >= -ENEMY_EXPAND_SIZE) && (range_with_ground <= ENEMY_EXPAND_SIZE)) {
+						GhostPosY = MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy + (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey + sprite[6]->GetPosAndSize().sizey) / 2 + 0.001f;
+					}
+					else if ((range_with_ceiling >= -ENEMY_EXPAND_SIZE) && (range_with_ceiling <= ENEMY_EXPAND_SIZE)) {
+						GhostPosY = MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey + sprite[6]->GetPosAndSize().sizey) / 2 - 0.001f;
+					}
+					sprite[6]->SetPos(GhostPosX, GhostPosY);
+
+					if ((range_with_rightwall >= -ENEMY_EXPAND_SIZE) && (range_with_rightwall <= ENEMY_EXPAND_SIZE)) {
+						GhostPosX = MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex + sprite[6]->GetPosAndSize().sizex) / 2 - 0.001f;
+					}
+					else if ((range_with_leftwall >= -ENEMY_EXPAND_SIZE) && (range_with_leftwall <= ENEMY_EXPAND_SIZE)) {
+						GhostPosX = MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx + (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex + sprite[6]->GetPosAndSize().sizex) / 2 + 0.001f;
+					}
+					sprite[6]->SetPos(GhostPosX, GhostPosY);
+				}
+			}
+
+			GhostMoveCoefficient = PLAYER_PUNCH_POWER_MINIMUM + EnemyCombo * PLAYER_PUNCH_ADDITIONAL_POWER;
+			if (GhostMoveCoefficient >= PLAYER_PUNCH_POWER_MAXIMUM) {
+				GhostMoveCoefficient = PLAYER_PUNCH_POWER_MAXIMUM;
+			}
+			//sprite[6]->SetAirTime(0.0f);
+			sprite[6]->SetNowAir(false);
+			EnemyCombo++;
+		}
+	}
 }
