@@ -13,13 +13,14 @@ SOUND_SE02,*/
 typedef enum
 {
 	SOUND_BGM001,
+	//SOUND_HIT01,
 	SOUNDFILEMAX,
 }SOUNDLABEL;
 
 class SoundClass
 {
 public:
-	HRESULT Init(void);				//初期化
+	bool Init(void);				//初期化
 	void Shutdown(void);			//シャットダウン
 	void Play(SOUNDLABEL label);	//再生
 	void Pause(SOUNDLABEL label);	//一時停止

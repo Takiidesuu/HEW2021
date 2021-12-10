@@ -1,26 +1,16 @@
 #pragma once
 
 #include "GameObject.h"
+#include "CEfectPanel.h"
+#include "Efect.h"
 #include "Input.h"
 #include "MapChip.h"
 #include "Collision.h"
 #include "Shape.h"
+#include "GameTimer.h"
+#include "SceneManager.h"
 
 class Scene
 {
-public:
-	bool Init();
-	bool Update();
-	void Draw();
-	bool SceneChange();
-private:
-	CSprite* background;
-	CGameObject **sprite;
-	CSprite ***MapChips;
 
-	CGameObject* playerObj;
-
-	Input* inputObj;
-
-	bool changeScene = false;
 };
