@@ -133,6 +133,24 @@ private:
 	float Old_Player_PosY = 0.0f;
 
 	bool hitMapchip_Player_flg = false;
+
+	// ステージクリアしたかどうか
+	bool stageClear = false;
+	// ステージに残ってる燃料の数
+	int remainingFuel = 3;
+	// 燃料の位置
+	float fuelPosX[3] = { 0.0f, 0.0f, 0.0f };
+	float fuelPosY[3] = { 0.0f, 0.0f, 0.0f };
+	// 燃料のサイズ
+	float fuelSizeX = 0.15f / 1.7777f;
+	float fuelSizeY = 0.15f;
+
+	int cnt = 0;
+
+	int playerAnimCnt = 0;
+	int playerAnimPart = 0;
+	int enemyAnimCnt = 0;
+	int enemyAnimPart = 0;
 };
 
 extern int Savehitmaphipnum[100][3];			//当たり判定のあるマップチップの配列番号を保存する配列
