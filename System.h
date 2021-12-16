@@ -24,7 +24,7 @@
 #include "StageSelect.h"
 #include "Scene.h"
 #include "SelectClass.h"
-//#include "Loading.h"
+#include "Loading.h"
 #include "Result.h"
 
 const bool FULL_SCREEN = false;	//フルスクリーン
@@ -53,14 +53,15 @@ private:
 	Title* titleObj = 0;				//タイトルオブジェクト
 	SelectClass* stageObj = 0;			//ステージセレクトオブジェクト
 	GameClass* gameObj = 0;				//ゲームオブジェクト
-	SaveLoad* saveloadObj = 0;			//セーブロード用オブジェクト
-	//Loading* loadingObj = 0;			//ローディング画面オブジェクト
+	Save_Load* saveloadObj = 0;			//セーブロード用オブジェクト
+	Loading* loadingObj = 0;			//ローディング画面オブジェクト
 	CResult* resultObj = 0;				//リザルト画面オブジェクト
 
 	//ウインドウズの初期化
 	void InitializeWindows(int& screenWidth, int& screenHeight);
 
 	bool first = true;
+	bool gameInit = false;
 };
 
 //メッセージ解読用関数

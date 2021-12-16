@@ -51,7 +51,7 @@ enum {
 class GameClass : public Scene
 {
 public:
-	bool Init();		//初期化
+	void Init();		//初期化
 	bool Update();		//ゲームループ
 	void Draw();
 
@@ -100,6 +100,11 @@ private:
 	float DragonPosX;
 	float DragonPosY;
 
+	//敵のUターンフラグ
+	bool  GhostUturn_Flg = true;
+	float GhostWalkCount = 0.0;
+	float GhostMoveDir_Interval = 0.0;
+
 	//敵の座標
 	float GhostPosX;
 	float GhostPosY;
@@ -133,6 +138,24 @@ private:
 	float Old_Player_PosY = 0.0f;
 
 	bool hitMapchip_Player_flg = false;
+
+	// ステージクリアしたかどうか
+	bool stageClear = false;
+	// ステージに残ってる燃料の数
+	int remainingFuel = 3;
+	// 燃料の位置
+	float fuelPosX[3] = { 0.0f, 0.0f, 0.0f };
+	float fuelPosY[3] = { 0.0f, 0.0f, 0.0f };
+	// 燃料のサイズ
+	float fuelSizeX = 0.3f / 1.7777f;
+	float fuelSizeY = 0.3f;
+
+	int cnt = 0;
+
+	int playerAnimCnt = 0;
+	int playerAnimPart = 0;
+	int enemyAnimCnt = 0;
+	int enemyAnimPart = 0;
 };
 
 extern int Savehitmaphipnum[100][3];			//当たり判定のあるマップチップの配列番号を保存する配列
