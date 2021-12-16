@@ -8,7 +8,7 @@
 class Title : public Scene
 {
 public:
-	bool Init();
+	void Init();
 	bool Update();
 	void Draw();
 
@@ -21,7 +21,7 @@ private:
 
 	bool logoflg = true;
 
-	bool PressEnyKeyflg = false;
+	bool PressAnyKeyflg = false;
 
 	const int returnTeamlogoTime = 80000;
 

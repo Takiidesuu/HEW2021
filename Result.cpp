@@ -1,89 +1,79 @@
-
 #include "Result.h"
 
-bool CResult::Init()
+void CResult::Init()
 {
 	//インプットオブジェクトを作る
-	inputObj = new Input;
+	mInputObj = new Input;
 
-	//インプットオブジェクトの作成に失敗したら
-	if (!inputObj)
-	{
-		MessageBoxA(nullptr, "インプットオブジェクト作れませんでした", "インプットエラー", MB_OK);
-		return false;
-	}
+	mSprite = new CSprite*[RESULT_SPRITE_NUM];
 
-	sprite = new CSprite*[RESULT_SPRITE_NUM];
+	mSprite[0] = new CSprite("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f);		//背景
+	mSprite[0]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
 
-	sprite[0] = new CSprite("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f);		//背景
-	sprite[0]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
+	mSprite[1] = new CSprite("assets/Select.png", 1, 1, 0.5f, 0.5f, 0.5f, 0.25f);		//Select
+	mSprite[2] = new CSprite("assets/Retry.png", 1, 1, 0.5f, -0.0f, 0.5f, 0.25f);		//Retry
+	mSprite[3] = new CSprite("assets/Next.png", 1, 1, 0.5f, -0.5f, 0.5f, 0.25f);		//Next
 
-	sprite[1] = new CSprite("assets/BG_haisouko_ver02.png", 1, 1, -0.75f, -0.5f, 0.5f, 0.25f);		//Select
-	sprite[2] = new CSprite("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, -0.5f, 0.5f, 0.25f);		//Retry
-	sprite[3] = new CSprite("assets/BG_haisouko_ver02.png", 1, 1, 0.75f, -0.5f, 0.5f, 0.25f);		//Next
+	mSprite[4] = new CSprite("assets/Achieve.png", 1, 1, -0.5f, 0.0f, 0.75f, 1.2f);		//リザルト表示
 
-	sprite[4] = new CSprite("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, 0.5f, 0.75f, 0.75f);		//リザルト
+	mSprite[5] = new CSprite("assets/ClearTime.png", 1, 1, 0.0f, 0.25f, 1.0f, 1.0f);		//クリアタイム表示
 
-	inputflg = false;
+	mSprite[6] = new CSprite("assets/Next.png", 1, 1, 0.5f, -0.5f, 0.5f, 0.25f);		//Next
 
-	return true;
+	mInputflg = false;
 }
 
 bool CResult::Update()
 {
 	//インプットオブジェクトをアップデート
-	inputObj->Input_Update();
+	mInputObj->Input_Update();
 
 	//ESCキー押したら、プログラム強制終了
-	if (inputObj->Input_GetKeyTrigger(VK_ESCAPE))
-		return false;
-
-	if (inputObj->isInput())	//インプットがあったら
-	{
-		if (inputflg == false) {
-			if ((inputObj->GetAxisShort(RIGHT)) && (select < NEXT)) {
-				select += 1;
-			}
-			if ((inputObj->GetAxisShort(LEFT)) && (select > STAGE_SELECT)) {
-				select -= 1;
-			}
-		}
-		inputflg = true;
-	}
-
-	if (inputObj->GetButtonPress(OK))
+	if (mInputObj->Input_GetKeyTrigger(VK_ESCAPE))
 		sceneManager.LoadScene(TITLE);
 
-	else {
-		inputflg = false;
-	}
-
-	switch (select)
+	switch (mResultScene)
 	{
-		default:
-			sprite[STAGE_SELECT]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
-			sprite[RETRY]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
-			sprite[NEXT]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
-			break;
-		case STAGE_SELECT:
-			sprite[STAGE_SELECT]->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
-			sprite[RETRY]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
-			sprite[NEXT]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
+	case TIME:
+		if (mInputObj->GetButtonPress(OK))
+			mResultScene = ACHIEVE;
+		break;
+	case ACHIEVE:
+		if (mInputObj->isInput())	//インプットがあったら
+		{
+			if (!mInputflg) {
+				if ((mInputObj->GetAxis(DOWN)) && (mSelect < NEXT)) {
+					mSelect += 1;
+				}
+				if ((mInputObj->GetAxis(UP)) && ((mSelect > STAGE_SELECT) || (mSelect == NONE))) {
+					mSelect -= 1;
+					if (mSelect < STAGE_SELECT) {
+						mSelect = STAGE_SELECT;
+					}
+				}
+			}
+			mInputflg = true;
+		}
+		else {
+			mInputflg = false;
+		}
 
-			break;
-		case RETRY:
-			sprite[STAGE_SELECT]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
-			sprite[RETRY]->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
-			sprite[NEXT]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
+		if (mInputObj->GetButtonPress(OK))
+			sceneManager.LoadScene(STAGESELECT);
 
-			break;
-		case NEXT:
-			sprite[STAGE_SELECT]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
-			sprite[RETRY]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
-			sprite[NEXT]->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-			break;
+		//現在の選択肢で強調するボタンを変える
+		for (int i = STAGE_SELECT; i <= NEXT; i++) {
+			if (i == mSelect)
+				mSprite[i]->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
+			else
+				mSprite[i]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
+		}
+		break;
+	default:
+		break;
 	}
+
+
 
 	Draw();
 
@@ -96,8 +86,21 @@ void CResult::Draw() {
 
 	Direct3D_GetContext()->ClearRenderTargetView(Direct3D_GetRenderTargetView(), clearColor);
 
-	for (int i = 0; i < RESULT_SPRITE_NUM; i++) {
-		sprite[i]->Draw();
+	switch (mResultScene)
+	{
+	case TIME:
+
+		mSprite[0]->Draw();
+		mSprite[5]->Draw();
+		mSprite[6]->Draw();
+
+
+		break;
+	case ACHIEVE:
+		for (int i = 0; i < 5; i++) {
+			mSprite[i]->Draw();
+		}
+		break;
 	}
 
 	Direct3D_GetSwapChain()->Present(0, 0);

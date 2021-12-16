@@ -9,17 +9,10 @@ RectShape rectC(1.0f, 1.0f, 1.0f, 1.0f);  // 当たり判定用の矩形
 int Savehitmaphipnum[100][3];			//当たり判定のあるマップチップの配列番号を保存する配列
 int hitmapchipnum = 0;					//当たり判定のあるマップチップの数
 
-bool GameClass::Init()
+void GameClass::Init()
 {
 	//インプットオブジェクトを作る
 	inputObj = new Input;
-
-	//インプットオブジェクトの作成に失敗したら
-	if (!inputObj)
-	{
-		MessageBoxA(nullptr, "インプットオブジェクト作れませんでした", "インプットエラー", MB_OK);
-		return false;
-	}
 
 	//画像系のオブジェクトを作る
 	sprite = new CGameObject*[64];
@@ -50,20 +43,38 @@ bool GameClass::Init()
 	//それぞれのオブジェクト配列に画像のデータを読み込んで、初期化する
 
 	//プレイヤー
-	sprite[0] = new CGameObject("assets/player.png", 1, 1, -0.25f, -0.7 + 0.15f / 2.0f, 0.15f * (float)RESOLUTIONY / (float)RESOLUTIONX, 0.15f);
+	sprite[0] = new CGameObject("assets/player.png", 7, 1, -0.25f, -0.7 + 0.15f / 2.0f, 0.15f * (float)RESOLUTIONY / (float)RESOLUTIONX, 0.15f);
 
-
-	sprite[1] = new CGameObject("assets/effect001.png", 1, 1, 0.0f, 0.0f, 0.15f, 0.15f);
+	sprite[1] = new CGameObject("assets/playerAttack.png", 11, 1, 0.0f, 0.0f, 0.15f * (float)RESOLUTIONY / (float)RESOLUTIONX, 0.15f);
 
 	sprite[3] = new CGameObject("assets/circle.png", 1, 1, 0.0f, 0.0f, circleSize * (float)RESOLUTIONY / (float)RESOLUTIONX, circleSize);
 	sprite[3]->enabled = false;
 
-	sprite[6] = new CGameObject("assets/enemy.png", 1, 1, 0.25f, 0.0f, 0.15f, 0.15f);
+	sprite[6] = new CGameObject("assets/enemy.png", 7, 1, 0.25f, 0.0f, 0.15f, 0.15f);
 	sprite[6]->enabled = true;
 
 	sprite[10] = new CGameObject("assets/tpEffect1.png", 1, 1, 0.0f, 0.0f, 0.15f, 0.15f);
 	sprite[11] = new CGameObject("assets/tpEffect2.png", 1, 1, 0.0f, 0.0f, 0.15f, 0.15f);
 	sprite[12] = new CGameObject("assets/tpEffect3.png", 1, 1, 0.0f, 0.0f, 0.15f, 0.15f);
+
+	// 燃料の座標指定
+	fuelPosX[0] = -0.5f;
+	fuelPosY[0] = 0.0f;
+
+	fuelPosX[1] = 0.0f;
+	fuelPosY[1] = 0.0f;
+
+	fuelPosX[2] = 0.5f;
+	fuelPosY[2] = 0.0f;
+
+	sprite[13] = new CGameObject("assets/MoE.png", 1, 1, fuelPosX[0], fuelPosY[0], fuelSizeX, fuelSizeY);
+	sprite[14] = new CGameObject("assets/MoE.png", 1, 1, fuelPosX[1], fuelPosY[1], fuelSizeX, fuelSizeY);
+	sprite[15] = new CGameObject("assets/MoE.png", 1, 1, fuelPosX[2], fuelPosY[2], fuelSizeX, fuelSizeY);
+	sprite[13]->enabled = true;
+	sprite[14]->enabled = true;
+	sprite[15]->enabled = true;
+
+	sprite[16] = new CGameObject("assets/stageClear.png", 1, 1, 0.0f, 0.0f, 1.0f, 0.5f);
 
 	BlackoutPanel = new CSprite("assets/EfectPanel.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f);
 	BlackoutPanel->SetColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -78,7 +89,9 @@ bool GameClass::Init()
 		moveV[i].vy = sinf((float)i * PI / 4.0f);
 	}
 
-	return true;
+	remainingFuel = 3;
+	cnt = 0;
+	stageClear = false;
 }
 
 bool GameClass::Update()
@@ -94,6 +107,34 @@ bool GameClass::Update()
 	}
 
 	if ((!showCircle) || (slowcnt == SLOW_SPEED)) {
+
+		playerAnimCnt++;
+
+		if (playerAnimCnt >= 50 && !tpAnimFlg)
+		{
+			playerAnimPart++;
+
+			if (playerAnimPart > 6)
+				playerAnimPart = 0;
+
+			sprite[0]->SetPart(playerAnimPart, 0);
+
+			playerAnimCnt = 0;
+		}
+
+		enemyAnimCnt++;
+
+		if (enemyAnimCnt >= 75 && !GhostNowMove)
+		{
+			enemyAnimPart++;
+
+			if (enemyAnimPart > 6)
+				enemyAnimPart = 0;
+
+			sprite[6]->SetPart(enemyAnimPart, 0);
+
+			enemyAnimCnt = 0;
+		}
 
 		if (!showCircle)
 			BlackoutPanel->SetColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -117,138 +158,176 @@ bool GameClass::Update()
 		GhostPosX = sprite[6]->GetPos('x');
 		GhostPosY = sprite[6]->GetPos('y');
 
+		if (GhostUturn_Flg)
+		{
+			GhostPosX -= 0.0003f;
+			GhostWalkCount -= 0.01;
+
+			if (GhostWalkCount <= -25.0f)
+			{
+				sprite[6]->reverse_flg = true;
+				GhostUturn_Flg = false;
+			}
+		}
+		else if (!GhostUturn_Flg)
+		{
+			GhostPosX += 0.0003f;
+			GhostWalkCount += 0.01;
+
+			if (GhostWalkCount >= 25.0f)
+			{
+				sprite[6]->reverse_flg = false;
+				GhostUturn_Flg = true;
+			}
+		}
+
 		//瞬間移動できるかどうかのフラグ
 		static bool Teleport_flg = false;
 
-		//移動できる場合（瞬間移動してない場合）
-		if (tpAnim == 0 && !tpAnimFlg)
+		if (!stageClear)
 		{
-			if (inputObj->isInput())	//インプットがあったら
+			//移動できる場合（瞬間移動してない場合）
+			if (tpAnim == 0 && !tpAnimFlg)
 			{
-				if (Teleport_flg == false)
+				if (inputObj->isInput())	//インプットがあったら
 				{
-					if (inputObj->GetAxis(UP))
+					if (Teleport_flg == false)
 					{
-						DragonDirection = 0;
-					}
-					if (inputObj->GetAxis(RIGHT))
-					{
-						DragonDirection = 1;
-					}
-					if (inputObj->GetAxis(DOWN))
-					{
-						DragonDirection = 2;
-					}
-					if (inputObj->GetAxis(LEFT))
-					{
-						DragonDirection = 3;
-					}
-					if (inputObj->GetAxis(UPPER_LEFT))
-					{
-						DragonDirection = 4;
-					}
-					if (inputObj->GetAxis(UPPER_RIGHT))
-					{
-						DragonDirection = 5;
-					}
-					if (inputObj->GetAxis(LOWER_LEFT))
-					{
-						DragonDirection = 6;
-					}
-					if (inputObj->GetAxis(LOWER_RIGHT))
-					{
-						DragonDirection = 7;
+						if (inputObj->GetAxis(UP))
+						{
+							DragonDirection = 0;
+						}
+						if (inputObj->GetAxis(RIGHT))
+						{
+							DragonDirection = 1;
+						}
+						if (inputObj->GetAxis(DOWN))
+						{
+							DragonDirection = 2;
+						}
+						if (inputObj->GetAxis(LEFT))
+						{
+							DragonDirection = 3;
+						}
+						if (inputObj->GetAxis(UPPER_LEFT))
+						{
+							DragonDirection = 4;
+						}
+						if (inputObj->GetAxis(UPPER_RIGHT))
+						{
+							DragonDirection = 5;
+						}
+						if (inputObj->GetAxis(LOWER_LEFT))
+						{
+							DragonDirection = 6;
+						}
+						if (inputObj->GetAxis(LOWER_RIGHT))
+						{
+							DragonDirection = 7;
+						}
+
+						stick_flg = true;
+
+						circleSizeReal += CIRCLE_SIZE_ADDITIONAL_SPEED;
+
+						if (circleSizeReal >= CIRCLE_SIZE_MAXIMUM) {
+							circleSizeReal = CIRCLE_SIZE_MAXIMUM;
+						}
+
+						showCircle = true;
+
+						sprite[3]->SetSize(circleSizeReal, circleSizeReal);
+						sprite[3]->enabled = showCircle;
 					}
 
-					stick_flg = true;
 
-					circleSizeReal += CIRCLE_SIZE_ADDITIONAL_SPEED;
-
-					if (circleSizeReal >= CIRCLE_SIZE_MAXIMUM) {
-						circleSizeReal = CIRCLE_SIZE_MAXIMUM;
-					}
-
-					showCircle = true;
-
-					sprite[3]->SetSize(circleSizeReal, circleSizeReal);
+				}
+				else if (stick_flg) {
+					showCircle = false;
 					sprite[3]->enabled = showCircle;
+					stick_flg = false;
+					Teleport_flg = true;
+					tpAnimFlg = true;
+					tpAnimPart = 9;
 				}
 
-				
-			}
-			else if (stick_flg) {
-				showCircle = false;
-				sprite[3]->enabled = showCircle;
-				stick_flg = false;
-				Teleport_flg = true;
-				tpAnimFlg = true;
-				tpAnimPart = 9;
 			}
 
+			if (Teleport_flg == true) {
+				static int cnt = 0;
+				cnt++;
+				if (cnt >= 100) {
+					Teleport_flg = false;
+					cnt = 0;
+				}
+			}
+
+			//瞬間移動アニメーションフラグがtrueの場合、カウント始まる
+			if (tpAnimFlg)
+			{
+				tpAnim++;
+			}
+
+			//Teleport();
+
+			NewMove();
+
+			// ゴーストの移動処理
+			if (GhostNowMove) {
+				EnemyMove();
+			}
+
+			playerObj->SetPos(DragonPosX, DragonPosY);
+
+			for (int a = 0; a < 2; a++)
+			{
+				if (a != 1)
+					sprite[a]->SetPos(DragonPosX, DragonPosY);
+			}
+
+			sprite[6]->SetPos(GhostPosX, GhostPosY);
+
+			//敵が地面となるマップチップに接地しているかの処理
+			if (!GhostNowMove) {
+				sprite[6]->nowAir = true;
+				for (int i = 0; i < hitmapchipnum; i++) {
+					if ((Collision::RectAndRectHit(sprite[6]->GetPosAndSize(), MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize())) && (sprite[6]->nowAir)) {
+						sprite[6]->nowAir = false;
+						GhostPosY = MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy + (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey + sprite[6]->GetPosAndSize().sizey) / 2;
+						sprite[6]->SetPos(GhostPosX, GhostPosY);
+					}
+				}
+			}
+
+			sprite[6]->Gravity();	//敵の重力
+
+		//コンボ中断時の処理
+			if (!GhostNowMove) {
+				EnemyCombo = 0;
+				if (ENEMY_SIZE_INITIALIZE) {
+					GhostSizeX = 0.15f;
+					GhostSizeY = 0.15f;
+				}
+			}
+
+			sprite[6]->SetSize(GhostSizeX, GhostSizeY);
+
+			sprite[3]->SetPos(playerObj->GetPos('x'), playerObj->GetPos('y'));	//範囲表示オブジェクトの位置を設定
 		}
-
-		if (Teleport_flg == true) {
-			static int cnt = 0;
-			cnt++;
-			if (cnt >= 100) {
-				Teleport_flg = false;
-				cnt = 0;
-			}
-		}
-
-		//瞬間移動アニメーションフラグがtrueの場合、カウント始まる
-		if (tpAnimFlg)
+		else 
 		{
-			tpAnim++;
+			sprite[16]->enabled = true;
+
+			cnt++;
 		}
 
-		//Teleport();
-
-		NewMove();
-
-		// ゴーストの移動処理
-		if (GhostNowMove) {
-			EnemyMove();
+		if (cnt >= 500)
+		{
+			Uninit();
+			sceneManager.LoadScene(RESULT);
 		}
-
-		playerObj->SetPos(DragonPosX, DragonPosY);
-
-		for (int a = 0; a < 2; a++)
-			sprite[a]->SetPos(DragonPosX, DragonPosY);
-
-		sprite[6]->SetPos(GhostPosX, GhostPosY);
-
-		//敵が地面となるマップチップに接地しているかの処理
-		if (!GhostNowMove) {
-			sprite[6]->nowAir = true;
-			for (int i = 0; i < hitmapchipnum; i++) {
-				if ((Collision::RectAndRectHit(sprite[6]->GetPosAndSize(), MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize())) && (sprite[6]->nowAir)) {
-					sprite[6]->nowAir = false;
-					GhostPosY = MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy + (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey + sprite[6]->GetPosAndSize().sizey) / 2;
-					sprite[6]->SetPos(GhostPosX, GhostPosY);
-				}
-			}
-		}
-
-	
-		sprite[6]->Gravity();	//敵の重力
-	
-
-	//コンボ中断時の処理
-		if (!GhostNowMove) {
-			EnemyCombo = 0;
-			if (ENEMY_SIZE_INITIALIZE) {
-				GhostSizeX = 0.15f;
-				GhostSizeY = 0.15f;
-			}
-		}
-
-		sprite[6]->SetSize(GhostSizeX, GhostSizeY);
-
-		sprite[3]->SetPos(playerObj->GetPos('x'), playerObj->GetPos('y'));	//範囲表示オブジェクトの位置を設定
-
-		Draw();
-
+		else
+			Draw();
 	}
 
 	return true;
@@ -294,13 +373,15 @@ void GameClass::Uninit()
 	delete[] MapChips;
 
 	delete background;
+
 	delete playerObj;
 
 	/*for (int i = 0; i < MAXSPRITE; i++) {
-		delete sprite[i];
-	}
+		if (sprite[i] != NULL)
+			delete sprite[i];
+	}*/
 
-	delete[] sprite;*/
+	delete[] sprite;
 }
 
 float Angle(float x1, float y1, float x2, float y2)
@@ -312,9 +393,6 @@ float Angle(float x1, float y1, float x2, float y2)
 
 void GameClass::EnemyMove()
 {
-	/*dirX = 1.0f;
-	dirX = 1.0f;*/
-
 	if (GhostMoveCoefficient > 0.0f)
 	{
 		GhostMoveCoefficient -= ENEMY_ATTENUATION;
@@ -656,6 +734,31 @@ void GameClass::NewMove()
 		tpAnimPart = 9;
 		tpAnim = 0;
 		circleSizeReal = circleSize;
+
+		// 燃料との当たり判定
+		for (int i = 0; i < 3; i++) {
+			// 矩形にプレイヤーと燃料の情報を渡す
+			rectA.SetPos(DragonPosX, DragonPosY);
+			rectA.SetSize(0.15f, 0.15f);
+			rectB.SetPos(fuelPosX[i], fuelPosY[i]);
+			rectB.SetSize(fuelSizeX, fuelSizeY);
+
+			// 矩形同士で当たり判定をとる
+			hit_flg = Collision::RectAndRectTest(rectB, rectA);
+
+			// 当たってたら燃料を消す
+			if (hit_flg) {
+				fuelPosX[i] = 10.0f;
+				fuelPosY[i] = 10.0f;
+				sprite[i + 13]->SetPos(fuelPosX[i], fuelPosY[i]);
+				remainingFuel--;
+			}
+
+			// 残ってる燃料がなくなったらクリア
+			if (remainingFuel == 0) {
+				stageClear = true;
+			}
+		}
 
 		if (GhostCanMove) {  // 敵に当たってたらゴーストの移動処理を始める
 			GhostNowMove = true;

@@ -5,7 +5,7 @@
 class StageSelect
 {
 public:
-	bool Init();
+	void Init();
 	bool Update();
 	void Draw();
 	bool SceneChange();
