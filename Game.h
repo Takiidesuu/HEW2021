@@ -10,21 +10,21 @@
 #define SCREENBOUNDDOWN -1.0f
 
 
-#define CIRCLE_SIZE_ADDITIONAL_SPEED 0.02f  // 円の大きくなる速さ
+#define CIRCLE_SIZE_ADDITIONAL_SPEED 0.10f  // 円の大きくなる速さ
 #define CIRCLE_SIZE_MINIMUM           0.5f  // 円の最小サイズ
-#define CIRCLE_SIZE_MAXIMUM           2.0f  // 円の最大サイズ
+#define CIRCLE_SIZE_MAXIMUM           6.0f  // 円の最大サイズ
 
 #define PLAYER_PUNCH_POWER_MINIMUM     0.003f  // プレイヤーの最小吹っ飛ばし力
 #define PLAYER_PUNCH_POWER_MAXIMUM      0.03f  // プレイヤーの最大吹っ飛ばし力
 #define ENEMY_ATTENUATION           0.000001f  // 敵の吹っ飛ばされた後の減衰力
 #define PLAYER_PUNCH_ADDITIONAL_POWER 0.0006f  // 吹っ飛ばす度にどのくらい敵が速くなるか
 
-#define ENEMY_EXPAND_SIZE    0.03f  // 敵を殴る度にどのくらい大きくなるか
-#define ENEMY_SIZE_MAXIMUM   0.33f  // 敵の最大サイズ
+#define ENEMY_EXPAND_SIZE    0.04f  // 敵を殴る度にどのくらい大きくなるか
+#define ENEMY_SIZE_MAXIMUM   0.44f  // 敵の最大サイズ
 #define ENEMY_SIZE_INITIALIZE true  // コンボが切れたときサイズを戻すかどうか（true：戻す　false：戻さない）
 
-#define SLOW_SPEED   10000  // スロー速度（数値が大きいほど遅くなる）
-#define SLOW_DARKNESS 0.6f  // スロー時の暗さ（数値が大きいほど暗くなる（0.0f～1.0f））
+#define SLOW_SPEED   40000  // スロー速度（数値が大きいほど遅くなる）
+#define SLOW_DARKNESS 0.5f  // スロー時の暗さ（数値が大きいほど暗くなる（0.0f～1.0f））
 
 // 2点を結んだ直線の角度を計算する関数
 float Angle(float x1, float y1, float x2, float y2);
@@ -64,6 +64,10 @@ public:
 	int completedLevel = 0;		//レベル番号（成功した）
 
 private:
+	int Star_Num = 0;
+	int World_Num = 0;
+	int Stage_Num = 0;
+
 	Input* inputObj;		//インプットオブジェクト
 
 	//描画する物
@@ -100,11 +104,6 @@ private:
 	float DragonPosX;
 	float DragonPosY;
 
-	//敵のUターンフラグ
-	bool  GhostUturn_Flg = true;
-	float GhostWalkCount = 0.0;
-	float GhostMoveDir_Interval = 0.0;
-
 	//敵の座標
 	float GhostPosX;
 	float GhostPosY;
@@ -117,7 +116,7 @@ private:
 	bool GhostNowMove = false;  // 敵が移動中かどうか
 	int GhostMoveDir0 = MOVE_DIR_NONE;  // 敵の移動方向を仮保存するための変数
 	int GhostMoveDir = MOVE_DIR_NONE;  // 敵の移動方向を保存する変数
-	float GhostMoveCoefficient = 0.003f;  // 敵の移動量の係数
+	float GhostMoveCoefficient = PLAYER_PUNCH_POWER_MINIMUM;  // 敵の移動量の係数
 	int GhostMoveCnt = 0;		//敵の動く時間を管理する変数
 
 	int EnemyCombo = 0;  // その敵に対するコンボ数
@@ -137,6 +136,15 @@ private:
 	float Old_Player_PosX = 0.0f;
 	float Old_Player_PosY = 0.0f;
 
+	// 瞬間移動したときの敵の位置
+	float TeleEnemyPosX = 0.0f;
+	float TeleEnemyPosY = 0.0f;
+
+	float previousPosX = 0.0f;
+	float previousPosY = 0.0f;
+
+	int block = 3;
+
 	bool hitMapchip_Player_flg = false;
 
 	// ステージクリアしたかどうか
@@ -147,10 +155,21 @@ private:
 	float fuelPosX[3] = { 0.0f, 0.0f, 0.0f };
 	float fuelPosY[3] = { 0.0f, 0.0f, 0.0f };
 	// 燃料のサイズ
-	float fuelSizeX = 0.3f / 1.7777f;
-	float fuelSizeY = 0.3f;
+	float fuelSizeX = 0.15f;
+	float fuelSizeY = 0.15f;
 
-	int cnt = 0;
+	// クリア処理がonかoffか
+	bool clearProcess = true;
+	// 当たり判定を可視化するか
+	bool collisionAppear = true;
+	// 敵の吹っ飛ばしパターン
+	int blowOffPattern = 1;
+	// 回り込むかどうか
+	bool goAround = false;
+	// 敵の当たり判定が矩形か円か（1：矩形 2：円）
+	int enemyCollisionShape = 1;
+
+	int cnt = 0;    //終了時にリザルトまでの待ち時間
 
 	int playerAnimCnt = 0;
 	int playerAnimPart = 0;
@@ -158,4 +177,4 @@ private:
 	int enemyAnimPart = 0;
 };
 
-extern int Savehitmaphipnum[100][3];			//当たり判定のあるマップチップの配列番号を保存する配列
+extern int Savehitmaphipnum[300][6];			//当たり判定のあるマップチップの配列番号を保存する配列

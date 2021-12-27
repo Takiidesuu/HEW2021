@@ -12,9 +12,14 @@ SOUND_SE02,*/
 //音声を使えるように、ラベルを付ける
 typedef enum
 {
-	SOUND_BGM001,
-	//SOUND_HIT01,
-	SOUNDFILEMAX,
+	SOUND_BGM001,	// 1-1のBGM
+	//SOUND_SE01,		// テレポート１番
+	//SOUND_SE02,		// テレポート２番
+	//SOUND_SE03,		// テレポート３番
+	//SOUND_SE04,		// テレポート４番
+	//SOUND_SE05,		// テレポート５番
+	//SOUND_SE06,		// テレポート６番
+	SOUNDFILEMAX,	// これ以上はないよ
 }SOUNDLABEL;
 
 class SoundClass
@@ -24,6 +29,7 @@ public:
 	void Shutdown(void);			//シャットダウン
 	void Play(SOUNDLABEL label);	//再生
 	void Pause(SOUNDLABEL label);	//一時停止
+	void Replay(SOUNDLABEL label);	//リプレイ
 	void Stop(SOUNDLABEL label);	//停止
 };
 

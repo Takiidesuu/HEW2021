@@ -2,8 +2,8 @@
 
 #include "Scene.h"
 
-#define BUTTONSIZEX 0.2f
-#define BUTTONSIZEY 0.15f
+#define BUTTONSIZEX 0.75f
+#define BUTTONSIZEY 0.3f
 
 class Title : public Scene
 {

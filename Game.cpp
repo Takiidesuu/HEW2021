@@ -5,8 +5,9 @@ VECTOR moveV[8];  // 移動用ベクトル
 RectShape rectA(1.0f, 1.0f, 1.0f, 1.0f);  // 当たり判定用の矩形
 RectShape rectB(1.0f, 1.0f, 1.0f, 1.0f);  // 当たり判定用の矩形
 RectShape rectC(1.0f, 1.0f, 1.0f, 1.0f);  // 当たり判定用の矩形
+CircleShape circleA(1.0f, 1.0f, 1.0f);  // 当たり判定用の円
 
-int Savehitmaphipnum[100][3];			//当たり判定のあるマップチップの配列番号を保存する配列
+int Savehitmaphipnum[300][6];			//当たり判定のあるマップチップの配列番号を保存する配列
 int hitmapchipnum = 0;					//当たり判定のあるマップチップの数
 
 void GameClass::Init()
@@ -16,6 +17,10 @@ void GameClass::Init()
 
 	//画像系のオブジェクトを作る
 	sprite = new CGameObject*[64];
+
+	Star_Num = sceneManager.ChoiceStar();
+	World_Num = sceneManager.ChoiceWorld();
+	Stage_Num = sceneManager.ChoiceStage();
 
 	for (int a = 0; a < MAXSPRITE; a++)
 	{
@@ -27,12 +32,27 @@ void GameClass::Init()
 	for (int i = 0; i < MAPCHIP_NUM_HEIGHT; i++) {
 		MapChips[i] = new CGameObject*[MAPCHIP_NUM_WIDTH];
 		for (int j = 0; j < MAPCHIP_NUM_WIDTH; j++) {
-			MapChips[i][j] = new CGameObject("assets/MapChip.png", 4, 1, -1 + j * 2 * (float)MAPCHIP_SIZE_WIDTH / (float)RESOLUTIONX + ((float)MAPCHIP_SIZE_WIDTH / (float)RESOLUTIONX), 1 - i * 2 * (float)MAPCHIP_SIZE_HEIGHT / (float)RESOLUTIONY - ((float)MAPCHIP_SIZE_HEIGHT / (float)RESOLUTIONY), (float)MAPCHIP_SIZE_WIDTH / (float)RESOLUTIONX * 2, (float)MAPCHIP_SIZE_HEIGHT / (float)RESOLUTIONY * 2, 80.0f, 16.0f);
-			MapChips[i][j]->SetPart(MapChipDate[i][j], 0);
-			if (MapChipDate[i][j]) {
+
+			switch (Star_Num)
+			{
+			case 0:
+				MapChips[i][j] = new CGameObject("assets/MapChipW1.png", 7, 1, -1.777 + j * MAPCHIP_SIZE + MAPCHIP_SIZE / 2, 1 - i * MAPCHIP_SIZE - MAPCHIP_SIZE / 2, MAPCHIP_SIZE, MAPCHIP_SIZE, 80.0f, 16.0f);
+				break;
+			case 1:
+				MapChips[i][j] = new CGameObject("assets/MapChipW2.png", 7, 1, -1.777 + j * MAPCHIP_SIZE + MAPCHIP_SIZE / 2, 1 - i * MAPCHIP_SIZE - MAPCHIP_SIZE / 2, MAPCHIP_SIZE, MAPCHIP_SIZE, 80.0f, 16.0f);
+				break;
+			/*case 2:
+				break;*/
+			default: 
+				MapChips[i][j] = new CGameObject("assets/MapChipW1.png", 7, 1, -1.777 + j * MAPCHIP_SIZE + MAPCHIP_SIZE / 2, 1 - i * MAPCHIP_SIZE - MAPCHIP_SIZE / 2, MAPCHIP_SIZE, MAPCHIP_SIZE, 80.0f, 16.0f);
+				break;
+			}
+			
+			MapChips[i][j]->SetPart(MapChipDate[Star_Num][World_Num][Stage_Num][i][j], 0);
+			if (MapChipDate[Star_Num][World_Num][Stage_Num][i][j]) {
 				Savehitmaphipnum[hitmapchipnum][0] = i;
 				Savehitmaphipnum[hitmapchipnum][1] = j;
-				Savehitmaphipnum[hitmapchipnum][2] = MapChipDate[i][j];
+				Savehitmaphipnum[hitmapchipnum][2] = MapChipDate[Star_Num][World_Num][Stage_Num][i][j];
 				hitmapchipnum++;
 			}
 		}
@@ -43,11 +63,11 @@ void GameClass::Init()
 	//それぞれのオブジェクト配列に画像のデータを読み込んで、初期化する
 
 	//プレイヤー
-	sprite[0] = new CGameObject("assets/player.png", 7, 1, -0.25f, -0.7 + 0.15f / 2.0f, 0.15f * (float)RESOLUTIONY / (float)RESOLUTIONX, 0.15f);
+	sprite[0] = new CGameObject("assets/player.png", 7, 1, -0.25f, -0.7 + 0.15f / 2.0f, 0.15f, 0.15f);
 
-	sprite[1] = new CGameObject("assets/playerAttack.png", 11, 1, 0.0f, 0.0f, 0.15f * (float)RESOLUTIONY / (float)RESOLUTIONX, 0.15f);
+	sprite[1] = new CGameObject("assets/playerAttack.png", 11, 1, 0.0f, 0.0f, 0.15f, 0.15f);
 
-	sprite[3] = new CGameObject("assets/circle.png", 1, 1, 0.0f, 0.0f, circleSize * (float)RESOLUTIONY / (float)RESOLUTIONX, circleSize);
+	sprite[3] = new CGameObject("assets/circle.png", 1, 1, 0.0f, 0.0f, circleSize, circleSize);
 	sprite[3]->enabled = false;
 
 	sprite[6] = new CGameObject("assets/enemy.png", 7, 1, 0.25f, 0.0f, 0.15f, 0.15f);
@@ -76,10 +96,36 @@ void GameClass::Init()
 
 	sprite[16] = new CGameObject("assets/stageClear.png", 1, 1, 0.0f, 0.0f, 1.0f, 0.5f);
 
-	BlackoutPanel = new CSprite("assets/EfectPanel.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f);
+	// 移動の当たり判定
+	sprite[17] = new CGameObject("assets/rect.png", 1, 1, 0, 0, 0, 0);
+	sprite[17]->SetColor(157.0f / 255.0f, 204.0f / 255.0f, 224.0f / 255.0f, 0.9f);
+
+	// 敵の当たり判定（矩形）
+	sprite[18] = new CGameObject("assets/rect.png", 1, 1, 0.25f, 0.0f, 0.15f, 0.15f);
+	sprite[18]->SetColor(0.0f, 1.0f, 0.0f, 0.3f);
+	sprite[18]->enabled = true;
+
+	// プレイヤーの当たり判定
+	sprite[19] = new CGameObject("assets/rect.png", 1, 1, -0.25f, -0.7 + 0.15f / 2.0f, 0.15f * 0.8f, 0.15f * 0.8f);
+	sprite[19]->SetColor(1.0f, 0.0f, 0.0f, 0.3f);
+	sprite[19]->enabled = true;
+
+	sprite[20] = new CGameObject("assets/UI_CLEAR_BG.png", 1, 1, 0.0f, 0.0f, 2.0f * (float)RESOLUTIONX / (float)RESOLUTIONY, 2.0f);
+
+	// デバッグ用の文字表示
+	sprite[21] = new CGameObject("assets/clearProcessOnOff.png", 1, 2, -1.3f, 0.95f, 0.23f, 0.06f);
+	sprite[22] = new CGameObject("assets/blowOffPattern.png", 1, 3, -1.0f, 0.95f, 0.23f, 0.055f);
+	sprite[21]->enabled = true;
+	sprite[22]->enabled = true;
+
+	// 敵の当たり判定（円）
+	sprite[23] = new CGameObject("assets/collisionCircle.png", 1, 1, 0.25f, 0.0f, 0.15f, 0.15f);
+	sprite[23]->SetColor(0.0f, 1.0f, 0.0f, 0.3f);
+
+	BlackoutPanel = new CSprite("assets/EfectPanel.png", 1, 1, 0.0f, 0.0f, BACKGROUNDWIDTH, BACKGROUNDHEIGHT);
 	BlackoutPanel->SetColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-	background = new CGameObject("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f);
+	background = new CGameObject("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, 0.0f, BACKGROUNDWIDTH, BACKGROUNDHEIGHT);
 
 	playerObj = sprite[0];
 
@@ -151,41 +197,116 @@ bool GameClass::Update()
 		if (inputObj->GetButtonPress(RESTART))
 			Init();
 
-		//プレイヤーの座標を取得
-		DragonPosX = playerObj->GetPos('x');
-		DragonPosY = playerObj->GetPos('y');
-
-		GhostPosX = sprite[6]->GetPos('x');
-		GhostPosY = sprite[6]->GetPos('y');
-
-		if (GhostUturn_Flg)
+		// Rキーでリセット
+		if (inputObj->Input_GetKeyTrigger('R'))
 		{
-			GhostPosX -= 0.0003f;
-			GhostWalkCount -= 0.01;
+			DragonPosX = -0.25f;
+			DragonPosY = -0.7 + 0.15f / 2.0f;
+			playerObj->SetPos(DragonPosX, DragonPosY);
+			GhostPosX = 0.25f;
+			GhostPosY = 0.0f;
+			GhostSizeX = 0.15f;
+			GhostSizeY = 0.15f;
+			sprite[6]->SetPos(GhostPosX, GhostPosY);
+			sprite[6]->SetSize(GhostSizeX, GhostSizeY);
+			fuelPosX[0] = -0.5f;
+			fuelPosY[0] = 0.0f;
+			fuelPosX[1] = 0.0f;
+			fuelPosY[1] = 0.0f;
+			fuelPosX[2] = 0.5f;
+			fuelPosY[2] = 0.0f;
+			sprite[13]->SetPos(-0.5f, 0.0f);
+			sprite[14]->SetPos(0.0f, 0.0f);
+			sprite[15]->SetPos(0.5f, 0.0f);
+			GhostCanMove = false;
+			GhostNowMove = false;
+			GhostMoveDir0 = MOVE_DIR_NONE;
+			GhostMoveDir = MOVE_DIR_NONE;
+			GhostMoveCoefficient = PLAYER_PUNCH_POWER_MINIMUM;
+			GhostMoveCnt = 0;
+			dirX = 1.0f;
+			dirY = 1.0f;
+			sprite[6]->SetAirTime(0.0f);
+			sprite[6]->SetNowAir(true);
+			tpAnimFlg = false;
+			tpAnimPart = 9;
+			tpAnim = 0;
+			slowcnt = 0;
+			showCircle = false;
+			EnemyCombo = 0;
+			hit_flg = false;
+			stick_flg = false;
+			PlayerAlive = true;
+			EnemyAlive = true;
+			stageClear = false;
+			remainingFuel = 3;
+		}
 
-			if (GhostWalkCount <= -25.0f)
-			{
-				sprite[6]->reverse_flg = true;
-				GhostUturn_Flg = false;
+		// Eキーでクリア処理のon/off
+		if (inputObj->Input_GetKeyTrigger('E'))
+		{
+			if (clearProcess) {
+				clearProcess = false;
+				sprite[21]->SetPart(0, 1);
+			}
+			else {
+				clearProcess = true;
+				sprite[21]->SetPart(0, 0);
 			}
 		}
-		else if (!GhostUturn_Flg)
-		{
-			GhostPosX += 0.0003f;
-			GhostWalkCount += 0.01;
 
-			if (GhostWalkCount >= 25.0f)
-			{
-				sprite[6]->reverse_flg = false;
-				GhostUturn_Flg = true;
+		// Cキーで当たり判定可視化のon/off
+		if (inputObj->Input_GetKeyTrigger('C'))
+		{
+			if (collisionAppear)
+				collisionAppear = false;
+			else
+				collisionAppear = true;
+		}
+
+		// Tキーで吹っ飛ばしパターン変更
+		if (inputObj->Input_GetKeyTrigger('T'))
+		{
+			if (blowOffPattern == 1) {
+				blowOffPattern = 2;
+				sprite[22]->SetPart(0, 1);
+			}
+			else if (blowOffPattern == 2) {
+				blowOffPattern = 3;
+				sprite[22]->SetPart(0, 2);
+			}
+			else if (blowOffPattern == 3) {
+				blowOffPattern = 1;
+				sprite[22]->SetPart(0, 0);
 			}
 		}
+
+		// Kキーで敵の当たり判定の形を変更
+		if (inputObj->Input_GetKeyTrigger('K'))
+		{
+			if (enemyCollisionShape == 1) {
+				enemyCollisionShape = 2;
+				sprite[18]->enabled = false;
+				sprite[23]->enabled = true;
+			}
+			else if (enemyCollisionShape == 2) {
+				enemyCollisionShape = 1;
+				sprite[18]->enabled = true;
+				sprite[23]->enabled = false;
+			}
+		}
+
+		////プレイヤーの座標を取得
+		//DragonPosX = playerObj->GetPos('x');
+		//DragonPosY = playerObj->GetPos('y');
+
+		//GhostPosX = sprite[6]->GetPos('x');
+		//GhostPosY = sprite[6]->GetPos('y');
 
 		//瞬間移動できるかどうかのフラグ
 		static bool Teleport_flg = false;
 
-		if (!stageClear)
-		{
+		if (!stageClear) {
 			//移動できる場合（瞬間移動してない場合）
 			if (tpAnim == 0 && !tpAnimFlg)
 			{
@@ -196,34 +317,66 @@ bool GameClass::Update()
 						if (inputObj->GetAxis(UP))
 						{
 							DragonDirection = 0;
+
+							sprite[17]->SetPos(DragonPosX, DragonPosY + circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f);
+							sprite[17]->SetSize(0.005f, circleSizeReal * 0.27f);
+							sprite[17]->rotationAngle = 0.0f;
 						}
 						if (inputObj->GetAxis(RIGHT))
 						{
 							DragonDirection = 1;
+
+							sprite[17]->SetPos(DragonPosX + circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f, DragonPosY);
+							sprite[17]->SetSize(circleSizeReal * 0.27f, 0.005f);
+							sprite[17]->rotationAngle = 0.0f;
 						}
 						if (inputObj->GetAxis(DOWN))
 						{
 							DragonDirection = 2;
+
+							sprite[17]->SetPos(DragonPosX, DragonPosY - circleSizeReal * 0.27f / 2.0f - 0.15f / 2.0f * 0.8f);
+							sprite[17]->SetSize(0.005f, circleSizeReal * 0.27f);
+							sprite[17]->rotationAngle = 0.0f;
 						}
 						if (inputObj->GetAxis(LEFT))
 						{
 							DragonDirection = 3;
+
+							sprite[17]->SetPos(DragonPosX - circleSizeReal * 0.27f / 2.0f - 0.15f / 2.0f * 0.8f, DragonPosY);
+							sprite[17]->SetSize(circleSizeReal * 0.27f, 0.005f);
+							sprite[17]->rotationAngle = 0.0f;
 						}
 						if (inputObj->GetAxis(UPPER_LEFT))
 						{
 							DragonDirection = 4;
+
+							sprite[17]->SetPos(DragonPosX + (circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f) * moveV[3].vx, DragonPosY + (circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f) * moveV[3].vy);
+							sprite[17]->SetSize(circleSizeReal * 0.27f, 0.005f);
+							sprite[17]->rotationAngle = PI * 3.0f / 4.0f;
 						}
 						if (inputObj->GetAxis(UPPER_RIGHT))
 						{
 							DragonDirection = 5;
+
+							sprite[17]->SetPos(DragonPosX + (circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f) * moveV[1].vx, DragonPosY + (circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f) * moveV[1].vy);
+							sprite[17]->SetSize(circleSizeReal * 0.27f, 0.005f);
+							sprite[17]->rotationAngle = PI * 1.0f / 4.0f;
 						}
 						if (inputObj->GetAxis(LOWER_LEFT))
 						{
 							DragonDirection = 6;
+
+							sprite[17]->SetPos(DragonPosX + (circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f) * moveV[5].vx, DragonPosY + (circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f) * moveV[5].vy);
+							sprite[17]->SetSize(circleSizeReal * 0.27f, 0.005f);
+							sprite[17]->rotationAngle = PI * 5.0f / 4.0f;
 						}
 						if (inputObj->GetAxis(LOWER_RIGHT))
 						{
 							DragonDirection = 7;
+
+							sprite[17]->SetPos(DragonPosX + (circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f) * moveV[7].vx, DragonPosY + (circleSizeReal * 0.27f / 2.0f + 0.15f / 2.0f * 0.8f) * moveV[7].vy);
+							sprite[17]->SetSize(circleSizeReal * 0.27f, 0.005f);
+							sprite[17]->rotationAngle = PI * 7.0f / 4.0f;
 						}
 
 						stick_flg = true;
@@ -236,11 +389,14 @@ bool GameClass::Update()
 
 						showCircle = true;
 
-						sprite[3]->SetSize(circleSizeReal, circleSizeReal);
+						sprite[3]->SetSize(circleSizeReal * 0.566f, circleSizeReal * 0.566f);
 						sprite[3]->enabled = showCircle;
+
+
 					}
 
-
+					if (collisionAppear)
+						sprite[17]->enabled = true;
 				}
 				else if (stick_flg) {
 					showCircle = false;
@@ -249,6 +405,8 @@ bool GameClass::Update()
 					Teleport_flg = true;
 					tpAnimFlg = true;
 					tpAnimPart = 9;
+
+					sprite[17]->enabled = false;
 				}
 
 			}
@@ -280,26 +438,25 @@ bool GameClass::Update()
 			playerObj->SetPos(DragonPosX, DragonPosY);
 
 			for (int a = 0; a < 2; a++)
-			{
-				if (a != 1)
-					sprite[a]->SetPos(DragonPosX, DragonPosY);
-			}
+				sprite[a]->SetPos(DragonPosX, DragonPosY);
 
 			sprite[6]->SetPos(GhostPosX, GhostPosY);
 
-			//敵が地面となるマップチップに接地しているかの処理
-			if (!GhostNowMove) {
-				sprite[6]->nowAir = true;
-				for (int i = 0; i < hitmapchipnum; i++) {
-					if ((Collision::RectAndRectHit(sprite[6]->GetPosAndSize(), MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize())) && (sprite[6]->nowAir)) {
-						sprite[6]->nowAir = false;
-						GhostPosY = MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy + (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey + sprite[6]->GetPosAndSize().sizey) / 2;
-						sprite[6]->SetPos(GhostPosX, GhostPosY);
-					}
-				}
-			}
+			////敵が地面となるマップチップに接地しているかの処理
+			//if (!GhostNowMove) {
+			//	sprite[6]->nowAir = true;
+			//	for (int i = 0; i < hitmapchipnum; i++) {
+			//		if ((Collision::RectAndRectHit(sprite[6]->GetPosAndSize(), MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize())) && (sprite[6]->nowAir)) {
+			//			sprite[6]->nowAir = false;
+			//			GhostPosY = MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy + (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey + sprite[6]->GetPosAndSize().sizey) / 2;
+			//			sprite[6]->SetPos(GhostPosX, GhostPosY);
+			//		}
+			//	}
+			//}
+
 
 			sprite[6]->Gravity();	//敵の重力
+
 
 		//コンボ中断時の処理
 			if (!GhostNowMove) {
@@ -312,22 +469,51 @@ bool GameClass::Update()
 
 			sprite[6]->SetSize(GhostSizeX, GhostSizeY);
 
-			sprite[3]->SetPos(playerObj->GetPos('x'), playerObj->GetPos('y'));	//範囲表示オブジェクトの位置を設定
-		}
-		else 
-		{
-			sprite[16]->enabled = true;
+			//sprite[3]->SetPos(playerObj->GetPos('x'), playerObj->GetPos('y'));	//範囲表示オブジェクトの位置を設定
 
-			cnt++;
+			sprite[20]->enabled = false;
+		}
+		else {
+		cnt++;
+			sprite[20]->enabled = true;
+		}
+
+		if (enemyCollisionShape == 1) {
+			sprite[18]->SetPos(GhostPosX, GhostPosY);
+			sprite[18]->SetSize(GhostSizeX, GhostSizeY);
+		}
+		else if (enemyCollisionShape == 2) {
+			sprite[23]->SetPos(GhostPosX, GhostPosY);
+			sprite[23]->SetSize(GhostSizeX, GhostSizeY);
+		}
+
+		sprite[19]->SetPos(DragonPosX, DragonPosY);
+
+		if (collisionAppear) {
+			if (enemyCollisionShape == 1) {
+				sprite[18]->enabled = true;
+			}
+			else if (enemyCollisionShape == 2) {
+				sprite[23]->enabled = true;
+			}
+			sprite[19]->enabled = true;
+		}
+		else {
+			sprite[17]->enabled = false;
+			sprite[18]->enabled = false;
+			sprite[19]->enabled = false;
+			sprite[23]->enabled = false;
 		}
 
 		if (cnt >= 500)
 		{
-			Uninit();
+			remainingFuel = 3;
+			cnt = 0;
 			sceneManager.LoadScene(RESULT);
 		}
-		else
-			Draw();
+
+		Draw();
+
 	}
 
 	return true;
@@ -384,15 +570,11 @@ void GameClass::Uninit()
 	delete[] sprite;
 }
 
-float Angle(float x1, float y1, float x2, float y2)
-{
-	double radian = atan2((double)(y1 - y2), (double)(x1 - x2));
-
-	return (float)radian;
-}
-
 void GameClass::EnemyMove()
 {
+	/*dirX = 1.0f;
+	dirX = 1.0f;*/
+
 	if (GhostMoveCoefficient > 0.0f)
 	{
 		GhostMoveCoefficient -= ENEMY_ATTENUATION;
@@ -407,9 +589,9 @@ void GameClass::EnemyMove()
 
 				float range_with_ceiling = ((sprite[6]->GetPosAndSize().posy - sprite[6]->GetPosAndSize().sizey / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posy + MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizey / 2));
 
-				float range_with_rightwall = ((sprite[6]->GetPosAndSize().posx + sprite[6]->GetPosAndSize().sizex / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx - MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex / 2)) * (float)RESOLUTIONY / (float)RESOLUTIONX;
+				float range_with_rightwall = ((sprite[6]->GetPosAndSize().posx + sprite[6]->GetPosAndSize().sizex / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx - MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex / 2));
 
-				float range_with_leftwall = ((sprite[6]->GetPosAndSize().posx - sprite[6]->GetPosAndSize().sizex / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx + MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex / 2))  * (float)RESOLUTIONY / (float)RESOLUTIONX;
+				float range_with_leftwall = ((sprite[6]->GetPosAndSize().posx - sprite[6]->GetPosAndSize().sizex / 2) - (MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().posx + MapChips[Savehitmaphipnum[i][0]][Savehitmaphipnum[i][1]]->GetPosAndSize().sizex / 2));
 
 				if (range_with_ground < 0)
 					range_with_ground *= -1.0f;
@@ -452,6 +634,9 @@ void GameClass::EnemyMove()
 				hitMapchip_Enemy = true;
 			}
 		}
+
+
+
 
 		// はじかれた方向に移動する
 		switch (GhostMoveDir)
@@ -525,50 +710,106 @@ void GameClass::NewMove()
 		playerObj = sprite[0];
 
 	if (tpAnim == 1) {
-		rectB.SetPos(GhostPosX, GhostPosY);
-		rectB.SetSize(GhostSizeX, GhostSizeY);
+		TeleEnemyPosX = GhostPosX;
+		TeleEnemyPosY = GhostPosY;
 
-		switch (DragonDirection)
-		{
-			//up
-		case 0:
-			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX, DragonPosY + circleSizeReal * 0.23f);
-			break;
+		if (enemyCollisionShape == 1) {
+			rectB.SetPos(GhostPosX, GhostPosY);
+			rectB.SetSize(GhostSizeX, GhostSizeY);
 
-			//right
-		case 1:
-			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f, DragonPosY);
-			break;
+			switch (DragonDirection)
+			{
+				//up
+			case 0:
+				hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY + 0.15f / 2.0f * 0.8f, DragonPosX, DragonPosY + circleSizeReal * 0.27f + 0.15f / 2.0f * 0.8f);
+				break;
 
-			//down
-		case 2:
-			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX, DragonPosY - circleSizeReal * 0.23f);
-			break;
+				//right
+			case 1:
+				hit_flg = Collision::RectAndLineTest(rectB, DragonPosX + 0.15f / 2.0f * 0.8f, DragonPosY, DragonPosX + circleSizeReal * 0.27f + 0.15f / 2.0f * 0.8f, DragonPosY);
+				break;
 
-			//left
-		case 3:
-			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX - circleSizeReal * 0.23f, DragonPosY);
-			break;
+				//down
+			case 2:
+				hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY - 0.15f / 2.0f * 0.8f, DragonPosX, DragonPosY - circleSizeReal * 0.27f - 0.15f / 2.0f * 0.8f);
+				break;
 
-			// 左上
-		case 4:
-			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f * moveV[3].vx, DragonPosY + circleSizeReal * 0.23f * moveV[3].vy);
-			break;
+				//left
+			case 3:
+				hit_flg = Collision::RectAndLineTest(rectB, DragonPosX - 0.15f / 2.0f * 0.8f, DragonPosY, DragonPosX - circleSizeReal * 0.27f - 0.15f / 2.0f * 0.8f, DragonPosY);
+				break;
 
-			// 右上
-		case 5:
-			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f * moveV[1].vx, DragonPosY + circleSizeReal * 0.23f * moveV[1].vy);
-			break;
+				// 左上
+			case 4:
+				hit_flg = Collision::RectAndLineTest(rectB, DragonPosX + 0.15f / 2.0f * 0.8f * moveV[3].vx, DragonPosY + 0.15f / 2.0f * 0.8f * moveV[3].vy, DragonPosX + circleSizeReal * 0.27f * moveV[3].vx + 0.15f / 2.0f * 0.8f * moveV[3].vx, DragonPosY + circleSizeReal * 0.27f * moveV[3].vy + 0.15f / 2.0f * 0.8f * moveV[3].vy);
+				break;
 
-			// 左下
-		case 6:
-			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f * moveV[5].vx, DragonPosY + circleSizeReal * 0.23f * moveV[5].vy);
-			break;
+				// 右上
+			case 5:
+				hit_flg = Collision::RectAndLineTest(rectB, DragonPosX + 0.15f / 2.0f * 0.8f * moveV[1].vx, DragonPosY + 0.15f / 2.0f * 0.8f * moveV[1].vy, DragonPosX + circleSizeReal * 0.27f * moveV[1].vx + 0.15f / 2.0f * 0.8f * moveV[1].vx, DragonPosY + circleSizeReal * 0.27f * moveV[1].vy + 0.15f / 2.0f * 0.8f * moveV[1].vy);
+				break;
 
-			// 右下
-		case 7:
-			hit_flg = Collision::RectAndLineTest(rectB, DragonPosX, DragonPosY, DragonPosX + circleSizeReal * 0.23f * moveV[7].vx, DragonPosY + circleSizeReal * 0.23f * moveV[7].vy);
-			break;
+				// 左下
+			case 6:
+				hit_flg = Collision::RectAndLineTest(rectB, DragonPosX + 0.15f / 2.0f * 0.8f * moveV[5].vx, DragonPosY + 0.15f / 2.0f * 0.8f * moveV[5].vy, DragonPosX + circleSizeReal * 0.27f * moveV[5].vx + 0.15f / 2.0f * 0.8f * moveV[5].vx, DragonPosY + circleSizeReal * 0.27f * moveV[5].vy + 0.15f / 2.0f * 0.8f * moveV[5].vy);
+				break;
+
+				// 右下
+			case 7:
+				hit_flg = Collision::RectAndLineTest(rectB, DragonPosX + 0.15f / 2.0f * 0.8f * moveV[7].vx, DragonPosY + 0.15f / 2.0f * 0.8f * moveV[7].vy, DragonPosX + circleSizeReal * 0.27f * moveV[7].vx + 0.15f / 2.0f * 0.8f * moveV[7].vx, DragonPosY + circleSizeReal * 0.27f * moveV[7].vy + 0.15f / 2.0f * 0.8f * moveV[7].vy);
+				break;
+			}
+		}
+		else if (enemyCollisionShape == 2) {
+			circleA.SetPos(GhostPosX, GhostPosY);
+			circleA.SetSize(GhostSizeX / 2.0f);
+
+			switch (DragonDirection)
+			{
+				//up
+			case 0:
+				hit_flg = Collision::CircleAndLineTest(circleA, DragonPosX, DragonPosY + 0.15f / 2.0f * 0.8f, DragonPosX, DragonPosY + circleSizeReal * 0.27f + 0.15f / 2.0f * 0.8f);
+				break;
+
+				//right
+			case 1:
+				hit_flg = Collision::CircleAndLineTest(circleA, DragonPosX + 0.15f / 2.0f * 0.8f, DragonPosY, DragonPosX + circleSizeReal * 0.27f + 0.15f / 2.0f * 0.8f, DragonPosY);
+				break;
+
+				//down
+			case 2:
+				hit_flg = Collision::CircleAndLineTest(circleA, DragonPosX, DragonPosY - 0.15f / 2.0f * 0.8f, DragonPosX, DragonPosY - circleSizeReal * 0.27f - 0.15f / 2.0f * 0.8f);
+				break;
+
+				//left
+			case 3:
+				hit_flg = Collision::CircleAndLineTest(circleA, DragonPosX - 0.15f / 2.0f * 0.8f, DragonPosY, DragonPosX - circleSizeReal * 0.27f - 0.15f / 2.0f * 0.8f, DragonPosY);
+				break;
+
+				// 左上
+			case 4:
+				hit_flg = Collision::CircleAndLineTest(circleA, DragonPosX + 0.15f / 2.0f * 0.8f * moveV[3].vx, DragonPosY + 0.15f / 2.0f * 0.8f * moveV[3].vy, DragonPosX + circleSizeReal * 0.27f * moveV[3].vx + 0.15f / 2.0f * 0.8f * moveV[3].vx, DragonPosY + circleSizeReal * 0.27f * moveV[3].vy + 0.15f / 2.0f * 0.8f * moveV[3].vy);
+				break;
+
+				// 右上
+			case 5:
+				hit_flg = Collision::CircleAndLineTest(circleA, DragonPosX + 0.15f / 2.0f * 0.8f * moveV[1].vx, DragonPosY + 0.15f / 2.0f * 0.8f * moveV[1].vy, DragonPosX + circleSizeReal * 0.27f * moveV[1].vx + 0.15f / 2.0f * 0.8f * moveV[1].vx, DragonPosY + circleSizeReal * 0.27f * moveV[1].vy + 0.15f / 2.0f * 0.8f * moveV[1].vy);
+				break;
+
+				// 左下
+			case 6:
+				hit_flg = Collision::CircleAndLineTest(circleA, DragonPosX + 0.15f / 2.0f * 0.8f * moveV[5].vx, DragonPosY + 0.15f / 2.0f * 0.8f * moveV[5].vy, DragonPosX + circleSizeReal * 0.27f * moveV[5].vx + 0.15f / 2.0f * 0.8f * moveV[5].vx, DragonPosY + circleSizeReal * 0.27f * moveV[5].vy + 0.15f / 2.0f * 0.8f * moveV[5].vy);
+				break;
+
+				// 右下
+			case 7:
+				hit_flg = Collision::CircleAndLineTest(circleA, DragonPosX + 0.15f / 2.0f * 0.8f * moveV[7].vx, DragonPosY + 0.15f / 2.0f * 0.8f * moveV[7].vy, DragonPosX + circleSizeReal * 0.27f * moveV[7].vx + 0.15f / 2.0f * 0.8f * moveV[7].vx, DragonPosY + circleSizeReal * 0.27f * moveV[7].vy + 0.15f / 2.0f * 0.8f * moveV[7].vy);
+				break;
+			}
+		}
+
+		if (hit_flg) {
+			GhostMoveDir = MOVE_DIR_NONE;
 		}
 	}
 
@@ -592,124 +833,308 @@ void GameClass::NewMove()
 			//up
 		case 0:
 			if (hit_flg) {
-				DragonPosX = GhostPosX;
-				DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+				if (blowOffPattern == 3) {
+					if (TeleEnemyPosY + GhostSizeY / 2.0f >= DragonPosY + circleSizeReal * 0.27f + 0.15f / 2.0f * 0.8f) {
+						goAround = false;
+					}
+					else {
+						goAround = true;
+					}
+				}
 
-				GhostMoveDir0 = MOVE_DIR_UP;
-				GhostMoveDir = MOVE_DIR_NONE;
+				if (blowOffPattern == 1 || (blowOffPattern == 3 && !goAround)) {
+					DragonPosX = GhostPosX;
+					DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_UP;
+				}
+				else if (blowOffPattern == 2 || (blowOffPattern == 3 && goAround)) {
+					DragonPosX = GhostPosX;
+					DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_DOWN;
+				}
+
+				//GhostMoveDir = MOVE_DIR_NONE;
 				GhostCanMove = true;
 			}
 			else {
-				DragonPosY += circleSizeReal * 0.23f;
+				DragonPosY += circleSizeReal * 0.27f;
 			}
 			break;
 
 			//right
 		case 1:
 			if (hit_flg) {
-				DragonPosX = GhostPosX - GhostSizeX / 2.0f;
-				DragonPosY = GhostPosY;
+				if (blowOffPattern == 3) {
+					if (TeleEnemyPosX + GhostSizeX / 2.0f >= DragonPosX + circleSizeReal * 0.27f + 0.15f / 2.0f * 0.8f) {
+						goAround = false;
+					}
+					else {
+						goAround = true;
+					}
+				}
 
-				GhostMoveDir0 = MOVE_DIR_RIGHT;
-				GhostMoveDir = MOVE_DIR_NONE;
+				if (blowOffPattern == 1 || (blowOffPattern == 3 && !goAround)) {
+					DragonPosX = GhostPosX - GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY;
+
+					GhostMoveDir0 = MOVE_DIR_RIGHT;
+				}
+				else if (blowOffPattern == 2 || (blowOffPattern == 3 && goAround)) {
+					DragonPosX = GhostPosX + GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY;
+
+					GhostMoveDir0 = MOVE_DIR_LEFT;
+				}
+
+				//GhostMoveDir = MOVE_DIR_NONE;
 				GhostCanMove = true;
 			}
 			else {
-				DragonPosX += circleSizeReal * 0.23f;
+				DragonPosX += circleSizeReal * 0.27f;
 			}
 			break;
 
 			//down
 		case 2:
 			if (hit_flg) {
-				DragonPosX = GhostPosX;
-				DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+				if (blowOffPattern == 3) {
+					if (TeleEnemyPosY - GhostSizeY / 2.0f <= DragonPosY - circleSizeReal * 0.27f - 0.15f / 2.0f * 0.8f) {
+						goAround = false;
+					}
+					else {
+						goAround = true;
+					}
+				}
 
-				GhostMoveDir0 = MOVE_DIR_DOWN;
-				GhostMoveDir = MOVE_DIR_NONE;
+				if (blowOffPattern == 1 || (blowOffPattern == 3 && !goAround)) {
+					DragonPosX = GhostPosX;
+					DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_DOWN;
+				}
+				else if (blowOffPattern == 2 || (blowOffPattern == 3 && goAround)) {
+					DragonPosX = GhostPosX;
+					DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_UP;
+				}
+
+				//GhostMoveDir = MOVE_DIR_NONE;
 				GhostCanMove = true;
 			}
 			else {
-				DragonPosY -= circleSizeReal * 0.23f;
+				DragonPosY -= circleSizeReal * 0.27f;
 			}
 			break;
 
 			//left
 		case 3:
 			if (hit_flg) {
-				DragonPosX = GhostPosX + GhostSizeX / 2.0f;
-				DragonPosY = GhostPosY;
+				if (blowOffPattern == 3) {
+					if (TeleEnemyPosX - GhostSizeX / 2.0f <= DragonPosX - circleSizeReal * 0.27f - 0.15f / 2.0f * 0.8f) {
+						goAround = false;
+					}
+					else {
+						goAround = true;
+					}
+				}
 
-				GhostMoveDir0 = MOVE_DIR_LEFT;
-				GhostMoveDir = MOVE_DIR_NONE;
+				if (blowOffPattern == 1 || (blowOffPattern == 3 && !goAround)) {
+					DragonPosX = GhostPosX + GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY;
+
+					GhostMoveDir0 = MOVE_DIR_LEFT;
+				}
+				else if (blowOffPattern == 2 || (blowOffPattern == 3 && goAround)) {
+					DragonPosX = GhostPosX - GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY;
+
+					GhostMoveDir0 = MOVE_DIR_RIGHT;
+				}
+
+				//GhostMoveDir = MOVE_DIR_NONE;
 				GhostCanMove = true;
 			}
 			else {
-				DragonPosX -= circleSizeReal * 0.23f;
+				DragonPosX -= circleSizeReal * 0.27f;
 			}
 			break;
 
 			// 左上
 		case 4:
 			if (hit_flg) {
-				DragonPosX = GhostPosX + GhostSizeX / 2.0f;
-				DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+				if (blowOffPattern == 3) {
+					if (enemyCollisionShape == 1) {
+						if (TeleEnemyPosX - GhostSizeX / 2.0f <= DragonPosX + circleSizeReal * 0.27f * moveV[3].vx + 0.15f / 2.0f * 0.8f * moveV[3].vx || TeleEnemyPosY + GhostSizeY / 2.0f >= DragonPosY + circleSizeReal * 0.27f * moveV[3].vy + 0.15f / 2.0f * 0.8f * moveV[3].vy) {
+							goAround = false;
+						}
+						else {
+							goAround = true;
+						}
+					}
+					else if (enemyCollisionShape == 2) {
+						if (TeleEnemyPosX - GhostSizeX / 2.0f * moveV[3].vx <= DragonPosX + circleSizeReal * 0.27f * moveV[3].vx + 0.15f / 2.0f * 0.8f * moveV[3].vx || TeleEnemyPosY + GhostSizeY / 2.0f * moveV[3].vy >= DragonPosY + circleSizeReal * 0.27f * moveV[3].vy + 0.15f / 2.0f * 0.8f * moveV[3].vy) {
+							goAround = false;
+						}
+						else {
+							goAround = true;
+						}
+					}
+				}
 
-				GhostMoveDir0 = MOVE_DIR_UPPER_LEFT;
-				GhostMoveDir = MOVE_DIR_NONE;
+				if (blowOffPattern == 1 || (blowOffPattern == 3 && !goAround)) {
+					DragonPosX = GhostPosX + GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_UPPER_LEFT;
+				}
+				else if (blowOffPattern == 2 || (blowOffPattern == 3 && goAround)) {
+					DragonPosX = GhostPosX - GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_LOWER_RIGHT;
+				}
+
+				//GhostMoveDir = MOVE_DIR_NONE;
 				GhostCanMove = true;
 			}
 			else {
-				DragonPosX += circleSizeReal * 0.23f * moveV[3].vx;
-				DragonPosY += circleSizeReal * 0.23f * moveV[3].vy;
+				DragonPosX += circleSizeReal * 0.27f * moveV[3].vx;
+				DragonPosY += circleSizeReal * 0.27f * moveV[3].vy;
 			}
 			break;
 
 			// 右上
 		case 5:
 			if (hit_flg) {
-				DragonPosX = GhostPosX - GhostSizeX / 2.0f;
-				DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+				if (blowOffPattern == 3) {
+					if (enemyCollisionShape == 1) {
+						if (TeleEnemyPosX + GhostSizeX / 2.0f >= DragonPosX + circleSizeReal * 0.27f * moveV[1].vx + 0.15f / 2.0f * 0.8f * moveV[1].vx || TeleEnemyPosY + GhostSizeY / 2.0f >= DragonPosY + circleSizeReal * 0.27f * moveV[1].vy + 0.15f / 2.0f * 0.8f * moveV[1].vy) {
+							goAround = false;
+						}
+						else {
+							goAround = true;
+						}
+					}
+					else if (enemyCollisionShape == 2) {
+						if (TeleEnemyPosX + GhostSizeX / 2.0f * moveV[1].vx >= DragonPosX + circleSizeReal * 0.27f * moveV[1].vx + 0.15f / 2.0f * 0.8f * moveV[1].vx || TeleEnemyPosY + GhostSizeY / 2.0f * moveV[1].vy >= DragonPosY + circleSizeReal * 0.27f * moveV[1].vy + 0.15f / 2.0f * 0.8f * moveV[1].vy) {
+							goAround = false;
+						}
+						else {
+							goAround = true;
+						}
+					}
+				}
 
-				GhostMoveDir0 = MOVE_DIR_UPPER_RIGHT;
-				GhostMoveDir = MOVE_DIR_NONE;
+				if (blowOffPattern == 1 || (blowOffPattern == 3 && !goAround)) {
+					DragonPosX = GhostPosX - GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_UPPER_RIGHT;
+				}
+				else if (blowOffPattern == 2 || (blowOffPattern == 3 && goAround)) {
+					DragonPosX = GhostPosX + GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_LOWER_LEFT;
+				}
+
+				//GhostMoveDir = MOVE_DIR_NONE;
 				GhostCanMove = true;
 			}
 			else {
-				DragonPosX += circleSizeReal * 0.23f * moveV[1].vx;
-				DragonPosY += circleSizeReal * 0.23f * moveV[1].vy;
+				DragonPosX += circleSizeReal * 0.27f * moveV[1].vx;
+				DragonPosY += circleSizeReal * 0.27f * moveV[1].vy;
 			}
 			break;
 
 			// 左下
 		case 6:
 			if (hit_flg) {
-				DragonPosX = GhostPosX + GhostSizeX / 2.0f;
-				DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+				if (blowOffPattern == 3) {
+					if (enemyCollisionShape == 1) {
+						if (TeleEnemyPosX - GhostSizeX / 2.0f <= DragonPosX + circleSizeReal * 0.27f * moveV[5].vx + 0.15f / 2.0f * 0.8f * moveV[5].vx || TeleEnemyPosY - GhostSizeY / 2.0f <= DragonPosY + circleSizeReal * 0.27f * moveV[5].vy + 0.15f / 2.0f * 0.8f * moveV[5].vy) {
+							goAround = false;
+						}
+						else {
+							goAround = true;
+						}
+					}
+					else if (enemyCollisionShape == 2) {
+						if (TeleEnemyPosX - GhostSizeX / 2.0f * moveV[5].vx <= DragonPosX + circleSizeReal * 0.27f * moveV[5].vx + 0.15f / 2.0f * 0.8f * moveV[5].vx || TeleEnemyPosY - GhostSizeY / 2.0f * moveV[5].vy <= DragonPosY + circleSizeReal * 0.27f * moveV[5].vy + 0.15f / 2.0f * 0.8f * moveV[5].vy) {
+							goAround = false;
+						}
+						else {
+							goAround = true;
+						}
+					}
+				}
 
-				GhostMoveDir0 = MOVE_DIR_LOWER_LEFT;
-				GhostMoveDir = MOVE_DIR_NONE;
+				if (blowOffPattern == 1 || (blowOffPattern == 3 && !goAround)) {
+					DragonPosX = GhostPosX + GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_LOWER_LEFT;
+				}
+				else if (blowOffPattern == 2 || (blowOffPattern == 3 && goAround)) {
+					DragonPosX = GhostPosX - GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_UPPER_RIGHT;
+				}
+
+				//GhostMoveDir = MOVE_DIR_NONE;
 				GhostCanMove = true;
 			}
 			else {
-				DragonPosX += circleSizeReal * 0.23f * moveV[5].vx;
-				DragonPosY += circleSizeReal * 0.23f * moveV[5].vy;
+				DragonPosX += circleSizeReal * 0.27f * moveV[5].vx;
+				DragonPosY += circleSizeReal * 0.27f * moveV[5].vy;
 			}
 			break;
 
 			// 右下
 		case 7:
 			if (hit_flg) {
-				DragonPosX = GhostPosX - GhostSizeX / 2.0f;
-				DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+				if (blowOffPattern == 3) {
+					if (enemyCollisionShape == 1) {
+						if (TeleEnemyPosX + GhostSizeX / 2.0f >= DragonPosX + circleSizeReal * 0.27f * moveV[7].vx + 0.15f / 2.0f * 0.8f * moveV[7].vx || TeleEnemyPosY - GhostSizeY / 2.0f <= DragonPosY + circleSizeReal * 0.27f * moveV[7].vy + 0.15f / 2.0f * 0.8f * moveV[7].vy) {
+							goAround = false;
+						}
+						else {
+							goAround = true;
+						}
+					}
+					else if (enemyCollisionShape == 2) {
+						if (TeleEnemyPosX + GhostSizeX / 2.0f * moveV[7].vx >= DragonPosX + circleSizeReal * 0.27f * moveV[7].vx + 0.15f / 2.0f * 0.8f * moveV[7].vx || TeleEnemyPosY - GhostSizeY / 2.0f * moveV[7].vy <= DragonPosY + circleSizeReal * 0.27f * moveV[7].vy + 0.15f / 2.0f * 0.8f * moveV[7].vy) {
+							goAround = false;
+						}
+						else {
+							goAround = true;
+						}
+					}
+				}
 
-				GhostMoveDir0 = MOVE_DIR_LOWER_RIGHT;
-				GhostMoveDir = MOVE_DIR_NONE;
+				if (blowOffPattern == 1 || (blowOffPattern == 3 && !goAround)) {
+					DragonPosX = GhostPosX - GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY + GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_LOWER_RIGHT;
+				}
+				else if (blowOffPattern == 2 || (blowOffPattern == 3 && goAround)) {
+					DragonPosX = GhostPosX + GhostSizeX / 2.0f;
+					DragonPosY = GhostPosY - GhostSizeY / 2.0f;
+
+					GhostMoveDir0 = MOVE_DIR_UPPER_LEFT;
+				}
+
+				//GhostMoveDir = MOVE_DIR_NONE;
 				GhostCanMove = true;
 			}
 			else {
-				DragonPosX += circleSizeReal * 0.23f * moveV[7].vx;
-				DragonPosY += circleSizeReal * 0.23f * moveV[7].vy;
+				DragonPosX += circleSizeReal * 0.27f * moveV[7].vx;
+				DragonPosY += circleSizeReal * 0.27f * moveV[7].vy;
 			}
 			break;
 		}
@@ -755,7 +1180,7 @@ void GameClass::NewMove()
 			}
 
 			// 残ってる燃料がなくなったらクリア
-			if (remainingFuel == 0) {
+			if (remainingFuel == 0 && clearProcess) {
 				stageClear = true;
 			}
 		}

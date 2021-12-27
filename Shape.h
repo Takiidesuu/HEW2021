@@ -23,7 +23,6 @@ public:
 	float GetCenterY() const;  // 中心のY座標を取得
 	float GetRadius() const;   // 半径を取得
 
-public:
 	float centerX, centerY;  // 中心の座標
 	float radius;            // 半径
 };
@@ -44,7 +43,18 @@ public:
 	float GetSizeX() const;  // 横幅を取得
 	float GetSizeY() const;  // 縦幅を取得
 
-public:
 	float posX, posY;    // 中心の座標
 	float sizeX, sizeY;  // 大きさ
+};
+
+
+//--------------------------------------
+// ベクトルクラス
+//--------------------------------------
+class Vec2 : public Shape
+{
+public:
+	Vec2(float x, float y);
+
+	float x, y;
 };

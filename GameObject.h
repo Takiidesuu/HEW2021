@@ -19,8 +19,6 @@ public:
 	CGameObject(const char* texturePath, int horizontalPartNum, int verticalPartNum, float PosX, float PosY, float SizeX, float SizeY);
 	CGameObject(const char* texturePath, int horizontalPartNum, int verticalPartNum, float PosX, float PosY, float SizeX, float SizeY, float PixcelSizeX, float PixcelSizeY);
 
-	void Draw();
-
 	virtual void Update();
 	TPos_and_Size GetPosAndSize();
 

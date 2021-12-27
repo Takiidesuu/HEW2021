@@ -3,6 +3,9 @@
 #include <math.h>
 #include <d3d11.h>	// マイクロソフト提供のDirectX11ヘッダーファイルをインクルード
 
+struct TPos {
+	float x, y;
+};
 
 // ****************************************
 // プリプロセッサ定数・マクロ定義
@@ -12,6 +15,9 @@
 #define COM_SAFE_RELEASE(o)   if(NULL!=o){o->Release();o=NULL;}
 
 #define MAXSPRITE 64
+
+#define RESOLUTIONX 1920
+#define RESOLUTIONY 1080
 
 // ****************************************
 // 公開する関数のプロトタイプ宣言
@@ -70,13 +76,15 @@ public:
 
 	bool reverse_flg = false;							//反転フラグ
 
+	float rotationAngle = 0.0f;                         //回転角度
+
 	void SetPos(float x, float y);						//マップ上の座標を指定する
 	void SetPosX(float x);								//X座標の指定
 	void SetPosY(float y);								//Y座標の指定
 	void SetSize(float width, float height);			//オブジェクトのサイズを指定する
 	void SetColor(float r, float g, float b, float a);	//オブジェクトの透明度と色の倍率を指定する
 	void SetPart(int x, int y);							//使用するテクスチャの位置を指定する
-	float GetPos(char coord);
+	TPos GetPos();
 	virtual void Update();
 
 	bool enabled = false;

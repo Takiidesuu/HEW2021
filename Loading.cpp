@@ -3,10 +3,8 @@
 bool Loading::Init()
 {
 	//描画するものの初期化（画像読み込み）
-	enemy = new CSprite("assets/enemy.png", 7, 1, posX - 1.35f, -0.8f, 0.3f * (float)RESOLUTIONY / (float)RESOLUTIONX, 0.4f);
-	loadingBar = new CSprite("assets/loading/loadingBar.png", 1, 1, posX, -0.8f, 2.5f, 0.2f);
-	background = new CSprite("assets/loading/background.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f);
-
+	enemy = new CSprite("assets/enemy.png", 7, 1, posX - 0.6f, -0.8f, 0.4f, 0.4f);
+	loadingBar = new CSprite("assets/loading/loadingBar.png", 3, 1, posX, -0.85f, 1.0f, 1.0f);
 	return true;		//初期化成功した事を報告する
 }
 
@@ -38,9 +36,6 @@ void Loading::Load(Func func1, Func func2, Func func3, Func func4, Func func5)
 			;
 	}
 
-	//一回の実行につき、ローディングバーの進む距離を計算する
-	goalIncrement = 100 / num;
-
 	//ローディング実行
 	for (int a = 0; a < num; a++)
 	{
@@ -49,8 +44,8 @@ void Loading::Load(Func func1, Func func2, Func func3, Func func4, Func func5)
 			//関数を実行し、その情報をfooに入れる
 			std::future<void> foo = std::async(std::launch::async, funcStr[a]);
 
-			//今進む距離のゴールに上で計算した距離を足す
-			progressGoal += goalIncrement;
+			foo.wait_for(std::chrono::milliseconds(1000));
+
 			Count();		//描画
 		}
 	}
@@ -58,22 +53,31 @@ void Loading::Load(Func func1, Func func2, Func func3, Func func4, Func func5)
 
 void Loading::Count()
 {
-	//描画ループ
-	for (int a = progress; a <= progressGoal; a++)
-	{
-		posX -= 0.021f;		//一回につき動く距離
+	int part = 0;
+	int enemyPart = 0;
 
-		//スプライトの位置を設定する
-		enemy->SetPosX(posX - 1.35f);
-		loadingBar->SetPosX(posX);
+	//描画ループ
+	for (int a = 0; a <= 8; a++)
+	{
+		if (a % 3 == 0)
+			part++;
+
+		if (part >= 3)
+			part = 0;
+
+		loadingBar->SetPart(part, 0);
+
+		enemyPart++;
+
+		if (enemyPart >= 7)
+			enemyPart = 0;
+
+		enemy->SetPart(enemyPart, 0);
 
 		Draw();		//描画
 
 		Sleep(SLOW);	//さらっと行かないように、一旦休ませる
 	}
-
-	//終わった時点の距離を保存する
-	progress = progressGoal;
 }
 
 void Loading::Draw()
@@ -83,7 +87,6 @@ void Loading::Draw()
 	Direct3D_GetContext()->ClearRenderTargetView(Direct3D_GetRenderTargetView(), clearColor);
 
 	//スプライトの描画
-	background->Draw();
 	enemy->Draw();
 	loadingBar->Draw();
 
@@ -93,9 +96,5 @@ void Loading::Draw()
 void Loading::Reset()
 {
 	//値の変数をリセットする
-	progress = 0;
-	progressGoal = 0;
-	goalIncrement = 0;
 	num = 0;
-	posX = 2.3f;
 }

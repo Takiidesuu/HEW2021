@@ -1,6 +1,6 @@
 #include "CEfectPanel.h"
 
-CEfectPanel::CEfectPanel() :CSprite("assets/EfectPanel.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f)
+CEfectPanel::CEfectPanel() :CSprite("assets/EfectPanel.png", 1, 1, 0.0f, 0.0f, 3.6f, 2.0f)
 {
 }
 void CEfectPanel::Update()
@@ -24,7 +24,7 @@ void CEfectPanel::Update()
 void CEfectPanel::FadeIn()
 {
 	if (mA > 0.0f) {
-		mA -= 0.001f;
+		mA -= 0.005f;
 		Status = InFadein;
 	}
 
@@ -35,7 +35,7 @@ void CEfectPanel::FadeIn()
 void CEfectPanel::FadeOut()
 {
 	if (mA < 1.0f) {
-		mA += 0.001f;
+		mA += 0.005f;
 		Status = InFadeout;
 	}
 	else {

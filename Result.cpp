@@ -7,18 +7,18 @@ void CResult::Init()
 
 	mSprite = new CSprite*[RESULT_SPRITE_NUM];
 
-	mSprite[0] = new CSprite("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, 0.0f, 2.0f, 2.0f);		//背景
+	mSprite[0] = new CSprite("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, 0.0f, BACKGROUNDWIDTH, BACKGROUNDHEIGHT);		//背景
 	mSprite[0]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
 
-	mSprite[1] = new CSprite("assets/Select.png", 1, 1, 0.5f, 0.5f, 0.5f, 0.25f);		//Select
-	mSprite[2] = new CSprite("assets/Retry.png", 1, 1, 0.5f, -0.0f, 0.5f, 0.25f);		//Retry
-	mSprite[3] = new CSprite("assets/Next.png", 1, 1, 0.5f, -0.5f, 0.5f, 0.25f);		//Next
+	mSprite[1] = new CSprite("assets/Select.png", 1, 1, 0.8f, 0.6f, 0.75f, 0.375f);		//Select
+	mSprite[2] = new CSprite("assets/Retry.png", 1, 1, 0.8f, -0.0f, 0.75f, 0.375f);		//Retry
+	mSprite[3] = new CSprite("assets/Next.png", 1, 1, 0.8f, -0.6f, 0.75f, 0.375f);		//Next
 
-	mSprite[4] = new CSprite("assets/Achieve.png", 1, 1, -0.5f, 0.0f, 0.75f, 1.2f);		//リザルト表示
+	mSprite[4] = new CSprite("assets/Achieve.png", 1, 1, -0.7f, -0.0f, 1.125f, 1.8f);		//リザルト表示
 
-	mSprite[5] = new CSprite("assets/ClearTime.png", 1, 1, 0.0f, 0.25f, 1.0f, 1.0f);		//クリアタイム表示
+	mSprite[5] = new CSprite("assets/ClearTime.png", 1, 1, 0.0f, 0.25f, 1.6f, 1.0f);		//クリアタイム表示
 
-	mSprite[6] = new CSprite("assets/Next.png", 1, 1, 0.5f, -0.5f, 0.5f, 0.25f);		//Next
+	mSprite[6] = new CSprite("assets/Next.png", 1, 1, 0.9f, -0.6f, 0.75f, 0.375f);		//Next
 
 	mInputflg = false;
 }

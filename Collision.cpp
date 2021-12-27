@@ -124,3 +124,60 @@ bool Collision::RectAndLineTest(const RectShape rect, const float x1, const floa
 
 	return false;
 }
+
+bool Collision::CircleAndLineTest(const CircleShape circle, const float x1, const float y1, const float x2, const float y2)
+{
+	// ベクトルの作成
+	Vec2 start_to_center = Vec2(circle.centerX - x1, circle.centerY - y1);
+	Vec2 end_to_center = Vec2(circle.centerX - x2, circle.centerY - y2);
+	Vec2 start_to_end = Vec2(x2 - x1, y2 - y1);
+
+	// 単位ベクトル化する
+	float start_to_end_length = sqrtf(start_to_end.x * start_to_end.x + start_to_end.y * start_to_end.y);
+	Vec2 normal_start_to_end = Vec2(start_to_end.x / start_to_end_length, start_to_end.y / start_to_end_length);
+
+	/*
+	射影した線分の長さ
+		始点と円の中心で外積を行う
+		※始点 => 終点のベクトルは単位化しておく
+	*/
+	float distance_projection = start_to_center.x * normal_start_to_end.y - normal_start_to_end.x * start_to_center.y;
+
+	// 線分と円の最短の長さが半径よりも小さい
+	if (fabsf(distance_projection) < circle.radius)
+	{
+		// 始点 => 終点と始点 => 円の中心の内積を計算する
+		float dot01 = start_to_center.x * start_to_end.x + start_to_center.y * start_to_end.y;
+		// 始点 => 終点と終点 => 円の中心の内積を計算する
+		float dot02 = end_to_center.x * start_to_end.x + end_to_center.y * start_to_end.y;
+
+		// 二つの内積の掛け算結果が0以下なら当たり
+		if (dot01 * dot02 <= 0.0f)
+		{
+			return true;
+		}
+		else
+		{
+			/*
+			上の条件から漏れた場合、円は線分上にはないので、
+			始点 => 円の中心の長さか、終点 => 円の中心の長さが
+			円の半径よりも短かったら当たり
+			*/
+			float start_to_center_length = sqrtf(start_to_center.x * start_to_center.x + start_to_center.y * start_to_center.y);
+			float end_to_center_length = sqrtf(end_to_center.x * end_to_center.x + end_to_center.y * end_to_center.y);
+
+			if (start_to_center_length < circle.radius || end_to_center_length < circle.radius)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
