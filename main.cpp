@@ -8,13 +8,13 @@
 
 #include "System.h"
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 int main()
 {
-#else
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow)
-{
-#endif
+//#else
+//int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow)
+//{
+//#endif
 	System* systemObj;		//システム変数を作る
 
 	bool result;			//成功かどうかを判断する用の変数

@@ -127,3 +127,5 @@ private:
 	int stage_num;			// WS_true関数でステージを指定する数値
 	bool loop;				// WS_true関数の際にループするフラグ
 };
+
+extern Save_Load* saveloadObj;

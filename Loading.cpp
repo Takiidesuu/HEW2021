@@ -8,16 +8,16 @@ bool Loading::Init()
 	return true;		//初期化成功した事を報告する
 }
 
-void Loading::Load(Func func1, Func func2, Func func3, Func func4, Func func5)
+void Loading::Load(Func func1, Func func2, Func func3, Func func4, Func func5, Func func6)
 {
 	Reset();	//値をリセットする
 
 	Count();	//初期状態を描画する
 
-	Func funcStr[5];	//functionポインターの配列
+	Func funcStr[6];	//functionポインターの配列
 
 	//初期化で、空にする
-	for (int a = 0; a < 5; a++)
+	for (int a = 0; a < 6; a++)
 		funcStr[a] = NULL;
 
 	//配列にロードする関数を入れる
@@ -26,9 +26,10 @@ void Loading::Load(Func func1, Func func2, Func func3, Func func4, Func func5)
 	funcStr[2] = func3;
 	funcStr[3] = func4;
 	funcStr[4] = func5;
+	funcStr[5] = func6;
 
 	//ロードする関数どれぐらいあるかをチェックする
-	for (int a = 0; a < 5; a++)
+	for (int a = 0; a < 6; a++)
 	{
 		if (funcStr[a] != NULL)		//空じゃなかったら、カウントアップ
 			num++;
@@ -44,7 +45,7 @@ void Loading::Load(Func func1, Func func2, Func func3, Func func4, Func func5)
 			//関数を実行し、その情報をfooに入れる
 			std::future<void> foo = std::async(std::launch::async, funcStr[a]);
 
-			foo.wait_for(std::chrono::milliseconds(1000));
+			//foo.wait_for(std::chrono::milliseconds(1000));
 
 			Count();		//描画
 		}

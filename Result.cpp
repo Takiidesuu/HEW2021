@@ -7,7 +7,7 @@ void CResult::Init()
 
 	mSprite = new CSprite*[RESULT_SPRITE_NUM];
 
-	mSprite[0] = new CSprite("assets/BG_haisouko_ver02.png", 1, 1, 0.0f, 0.0f, BACKGROUNDWIDTH, BACKGROUNDHEIGHT);		//背景
+	mSprite[0] = new CSprite("assets/background.png", 1, 1, 0.0f, 0.0f, BACKGROUNDWIDTH, BACKGROUNDHEIGHT);		//背景
 	mSprite[0]->SetColor(0.5f, 0.5f, 0.5f, 1.0f);
 
 	mSprite[1] = new CSprite("assets/Select.png", 1, 1, 0.8f, 0.6f, 0.75f, 0.375f);		//Select
@@ -27,10 +27,6 @@ bool CResult::Update()
 {
 	//インプットオブジェクトをアップデート
 	mInputObj->Input_Update();
-
-	//ESCキー押したら、プログラム強制終了
-	if (mInputObj->Input_GetKeyTrigger(VK_ESCAPE))
-		sceneManager.LoadScene(TITLE);
 
 	switch (mResultScene)
 	{

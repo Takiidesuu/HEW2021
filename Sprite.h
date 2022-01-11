@@ -85,6 +85,7 @@ public:
 	void SetColor(float r, float g, float b, float a);	//オブジェクトの透明度と色の倍率を指定する
 	void SetPart(int x, int y);							//使用するテクスチャの位置を指定する
 	TPos GetPos();
+	TPos GetSize();
 	virtual void Update();
 
 	bool enabled = false;

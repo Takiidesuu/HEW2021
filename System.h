@@ -26,6 +26,7 @@
 #include "Loading.h"
 #include "Result.h"
 #include "LoadGame.h"
+#include "Option.h"
 
 const bool FULL_SCREEN = false;	//フルスクリーン
 
@@ -50,6 +51,7 @@ private:
 
 	Title* titleObj = 0;				//タイトルオブジェクト
 	LoadGame* loadGameObj = 0;			//セーブファイル表示画面オブジェクト
+	Option* optionObj = 0;				//オプション画面オブジェクト
 	SelectClass* stageObj = 0;			//ステージセレクトオブジェクト
 	GameClass* gameObj = 0;				//ゲームオブジェクト
 	Save_Load* saveloadObj = 0;			//セーブロード用オブジェクト

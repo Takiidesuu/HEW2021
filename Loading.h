@@ -10,7 +10,7 @@ public:
 	typedef std::function<void()> Func;				//functionポインター変数
 
 	bool Init();									//初期化
-	void Load(Func, Func, Func, Func, Func);		//ローディング
+	void Load(Func, Func, Func, Func, Func, Func);		//ローディング
 
 	void Count();			//進行のカウント
 

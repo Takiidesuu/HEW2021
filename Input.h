@@ -5,10 +5,14 @@
 #include <string>
 #pragma comment (lib, "xinput.lib")
 
-#define DEADZONE_LX 4
-#define DEADZONE_LY 3
-#define DEADZONE_RX 3.75f
-#define DEADZONE_RY 2.75f
+#define DEADZONE1_X		19000
+#define DEADZONE2_X		29500
+
+#define DEADZONE1_Y		12500
+#define DEADZONE2_Y		27500
+
+#define DEADZONE_MIN	  200
+#define DEADZONE_MAX	32768
 
 //------------------------------------------------------------
 // Input.h以外で使用する際の定義
@@ -40,15 +44,24 @@ enum DIR
 	UPPER_RIGHT,	// 右上
 	LOWER_LEFT,		// 左下
 	LOWER_RIGHT,	// 右下
+
+	R22d5,  // 北北東
+	R67d5,  // 東北東
+	R112d5,  // 東南東
+	R157d5,  // 南南東
+	R202d5,  // 南南西
+	R247d5,  // 西南西
+	R292d5,  // 西北西
+	R337d5,  // 北北西
 };
 
 enum ACTION
 {
-	SHOWCIRCLESMALL,		//小さい範囲表示
-	SHOWCIRCLEBIG,			//大きい範囲表示
 	OK,						//選ぶアクション（ENTERキー、Aボタン）
 	BACK,					//戻るアクション（ESCキー、Bキー）
 	RESTART,				//リスタート（デバッグ用）
+	BREAKCIRCLE,
+	HOMINGOFF
 };
 
 

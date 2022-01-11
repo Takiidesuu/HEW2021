@@ -9,7 +9,7 @@
 #define WORLDSIZEWIDTH 1.2f
 #define WORLDSIZEHEIGHT 0.5f
 
-#define STAGEICONWIDTH 1.6f / 1.4f
+#define STAGEICONWIDTH 1.6f / 1.1f
 #define STAGEICONHEIGHT 0.5f / 1.4f
 
 #define MOVESPEED 0.001f * 5.0f
@@ -48,6 +48,9 @@ private:
 	CSprite **starName;
 	CSprite ***worldIcon;
 	CSprite ****stageIcon;
+	CSprite* entryAnim;
+
+	TPos stagePos[3];
 
 	int arrowPos = -1;
 	int dir = 0;
@@ -64,4 +67,5 @@ private:
 	void MoveAnim();
 	bool anim = true;
 	bool moveAnim = false;
+	bool playMusic = true;
 };

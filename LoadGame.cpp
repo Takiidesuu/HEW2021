@@ -6,10 +6,10 @@ void LoadGame::Init()
 
 	loadMenu = new CSprite*[3];
 
-	background = new CSprite("assets/loadscreen/background.png", 1, 1, 0.0f, 0.0f, BACKGROUNDWIDTH, BACKGROUNDWIDTH);
-	loadMenu[0] = new CSprite("assets/loadscreen/saveData1.png", 2, 1, -0.5f, 0.5f, BUTTONSIZEX, BUTTONSIZEY);
-	loadMenu[1] = new CSprite("assets/loadscreen/saveData2.png", 2, 1, -0.5f, 0.0f, BUTTONSIZEX, BUTTONSIZEY);
-	loadMenu[2] = new CSprite("assets/loadscreen/saveData3.png", 2, 1, -0.5f, -0.5f, BUTTONSIZEX, BUTTONSIZEY);
+	background = new CSprite("assets/loadscreen/background.png", 1, 1, 0.0f, 0.0f, BACKGROUNDWIDTH, BACKGROUNDHEIGHT);
+	loadMenu[0] = new CSprite("assets/loadscreen/saveData1.png", 2, 1, -0.7f, 0.5f, BUTTONSIZEX / 2.0f, BUTTONSIZEY / 4.0f);
+	loadMenu[1] = new CSprite("assets/loadscreen/saveData2.png", 2, 1, -0.7f, 0.0f, BUTTONSIZEX / 2.0f, BUTTONSIZEY / 4.0f);
+	loadMenu[2] = new CSprite("assets/loadscreen/saveData3.png", 2, 1, -0.7f, -0.5f, BUTTONSIZEX / 2.0f, BUTTONSIZEY / 4.0f);
 }
 
 bool LoadGame::Update()
